@@ -13,51 +13,79 @@
 .hdr-row{display:flex;align-items:center;gap:12px}.logo{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#f59e0b,#d97706);display:flex;align-items:center;justify-content:center;font-size:18px}
 .hdr h1{font-size:17px;font-weight:700;letter-spacing:-0.02em}.hdr .sub{font-size:10px;color:var(--muted);margin-top:1px}
 .tabs{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}.tab{padding:5px 14px;border-radius:7px;font-size:11px;font-family:var(--mono);border:1px solid var(--border);background:var(--card);color:var(--muted);transition:all .15s}.tab.on{border-color:var(--amber);background:rgba(245,158,11,.1);color:var(--amber)}
-.view-tabs{display:flex;gap:4px;padding:10px 22px 0;}.vtab{padding:7px 18px;border-radius:8px 8px 0 0;font-size:12px;font-weight:600;border:1px solid var(--border);border-bottom:none;background:var(--card);color:var(--muted)}.vtab.on{background:var(--card2);color:var(--text);border-color:var(--border)}
+.view-tabs{display:flex;gap:4px;padding:10px 22px 0}.vtab{padding:7px 18px;border-radius:8px 8px 0 0;font-size:12px;font-weight:600;border:1px solid var(--border);border-bottom:none;background:var(--card);color:var(--muted)}.vtab.on{background:var(--card2);color:var(--text);border-color:var(--border)}
 .atitle{padding:10px 22px 6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}.atitle .nm{font-size:14px;font-weight:600}.atitle .cd{font-size:11px;color:var(--muted);font-family:var(--mono)}.atitle .dt{font-size:10px;color:var(--dim);margin-left:auto}
 .sts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:6px 22px 14px}.st{background:var(--card);border-radius:10px;padding:10px 13px;border:1px solid var(--border)}.st .lb{font-size:9px;color:#555;letter-spacing:.08em;margin-bottom:4px}.st .vl{font-size:20px;font-weight:700;font-family:var(--mono)}
-.tw{padding:0 22px 18px}.tb{background:var(--card);border-radius:0 12px 12px 12px;border:1px solid var(--border);overflow:hidden}
+.tw{padding:0 22px 18px}.tb{background:var(--card);border-radius:0 12px 12px 12px;border:1px solid var(--border);overflow-x:auto}
 .th{display:grid;padding:8px 14px;border-bottom:1px solid var(--border);font-size:9px;color:#555;letter-spacing:.06em}.th span:not(:first-child){text-align:center}
 .kr{display:grid;padding:10px 14px;border-bottom:1px solid #0e0e14;align-items:center;cursor:pointer;transition:background .12s}.kr:hover{background:#15151d}.kr.op{background:#16161f}.kr>div:not(:first-child){text-align:center}
 .kn{font-size:12px;font-weight:500}.rb{display:inline-block;padding:3px 8px;border-radius:5px;font-size:12px;font-weight:700;font-family:var(--mono)}.mb{font-size:11px;font-family:var(--mono);font-weight:600;padding:2px 6px;border-radius:4px}
+.child-tag{font-size:9px;font-family:var(--mono);color:var(--muted);background:#1a1a22;padding:2px 5px;border-radius:3px;display:inline-block;margin-top:2px;position:relative;cursor:pointer}
+.child-tag:hover .ct-tip{display:block}
+.ct-tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1e1e28;border:1px solid #2a2a33;border-radius:8px;padding:10px 12px;min-width:200px;z-index:100;box-shadow:0 4px 16px rgba(0,0,0,.5);white-space:nowrap}
+.ct-tip::after{content:'';position:absolute;top:100%;left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:#2a2a33}
+.ct-tip .ct-asin{font-size:11px;font-family:var(--mono);color:var(--amber);margin-bottom:4px}
+.ct-tip .ct-name{font-size:11px;color:var(--text);margin-bottom:6px}
+.ct-tip .ct-link{font-size:10px;color:var(--blue);text-decoration:none}
+.ct-tip .ct-link:hover{text-decoration:underline}
 .dp{padding:14px 16px 18px;background:#0d0d14;border-bottom:1px solid var(--border)}.dp .hd{font-size:10px;color:#555;letter-spacing:.04em;margin-bottom:10px}
 .dr{display:flex;gap:14px;margin-top:12px;flex-wrap:wrap}.dc{text-align:center}.dc .d{font-size:9px;color:#444}.dc .r{font-size:13px;font-weight:700;font-family:var(--mono);margin-top:1px}.dc .sp{font-size:8px;color:var(--purple);margin-top:1px}
-.comp-row{display:grid;grid-template-columns:35px 1fr 60px 55px 55px 55px;padding:8px 14px;border-bottom:1px solid #0e0e14;align-items:center;font-size:12px}.comp-row>div:nth-child(n+3){text-align:center;font-family:var(--mono);font-size:11px}
-.comp-rank{font-family:var(--mono);font-weight:700;font-size:13px}.comp-title{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sp-badge{font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(167,139,250,.15);color:var(--purple);font-weight:600}
 .imp{padding:0 22px 22px}.impb{background:var(--card);border-radius:10px;border:1px solid var(--border)}.imps{padding:10px 14px;font-size:12px;color:var(--muted);cursor:pointer;user-select:none;list-style:none}.imps::-webkit-details-marker{display:none}
 .impc{padding:0 14px 14px}.impc textarea{width:100%;height:80px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;font-family:var(--mono);padding:10px;resize:vertical}
 .btns{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.bp{padding:6px 16px;border-radius:6px;border:none;background:var(--amber);color:#000;font-size:12px;font-weight:600}.bs{padding:6px 16px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px}
 .lg{padding:8px 22px 22px;text-align:center;font-size:9px;color:#333}.ld{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px;color:var(--muted)}.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--amber);border-radius:50%;animation:sp .7s linear infinite}@keyframes sp{to{transform:rotate(360deg)}}
 .status-bar{padding:6px 22px;font-size:10px;color:var(--dim);display:flex;align-items:center;gap:6px}.status-dot{width:6px;height:6px;border-radius:50%}
-@media(max-width:600px){.sts{grid-template-columns:repeat(2,1fr)}.comp-row{grid-template-columns:30px 1fr 50px 45px 45px 45px}}
+@media(max-width:700px){.sts{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
+<div style="display:flex;gap:0;border-bottom:1px solid var(--border);background:#08080d">
+<a href="index.html" style="padding:10px 20px;font-size:12px;font-weight:600;color:var(--amber);text-decoration:none;border-bottom:2px solid var(--amber)">Organic Tracker</a>
+<a href="ads.html" style="padding:10px 20px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent">Ads Intelligence</a>
+<a href="ai.html" style="padding:10px 20px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent">AI Recommendations</a>
+</div>
 <div id="app"><div class="ld"><div class="spin"></div><div>Loading rank data...</div></div></div>
 <script>
 const DATA_URL='./rank_history.json';
 
-// ── Helpers ──
 function rc(r){if(!r)return'var(--dim)';if(r<=3)return'var(--green)';if(r<=8)return'var(--green2)';if(r<=20)return'var(--amber)';if(r<=40)return'var(--orange)';return'var(--red)'}
 function rbg(r){if(!r)return'#1a1a20';if(r<=3)return'#052e1688';if(r<=8)return'#064e3b66';if(r<=20)return'#42200666';if(r<=40)return'#43140766';return'#450a0a66'}
 function mv(c,p){if(c==null&&p==null)return{t:'—',c:'var(--dim)',b:'transparent'};if(c==null)return{t:'LOST',c:'var(--red)',b:'#450a0a66'};if(p==null)return{t:'NEW',c:'var(--green)',b:'#052e1666'};const d=p-c;if(d>0)return{t:'▲'+d,c:'var(--green)',b:'#052e1666'};if(d<0)return{t:'▼'+Math.abs(d),c:'var(--red)',b:'#450a0a66'};return{t:'—',c:'var(--muted)',b:'transparent'}}
 function esc(s){return s.replace(/'/g,"\\'").replace(/"/g,'&quot;')}
+function lastN(s,n){return s?s.slice(-n):''}
 
-function spark(hist,w=130,h=28){const v=hist.filter(d=>d.rank!=null);if(v.length<2)return'<span style="color:var(--dim);font-size:10px">—</span>';const mx=Math.max(...v.map(d=>d.rank)),mn=Math.min(...v.map(d=>d.rank)),rn=mx-mn||1,p=3;const pts=v.map((d,i)=>[p+(i/(v.length-1))*(w-p*2),p+((d.rank-mn)/rn)*(h-p*2)]);const im=v[v.length-1].rank<v[0].rank,cl=im?'var(--green)':'var(--red)';let s=`<svg width="${w}" height="${h}" style="display:block"><polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${cl}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;pts.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="${i===pts.length-1?3:1.2}" fill="${i===pts.length-1?cl:'#555'}"/>`});return s+'</svg>'}
+function spark(hist,w=110,h=28){const v=hist.filter(d=>d.rank!=null);if(v.length<2)return'<span style="color:var(--dim);font-size:10px">—</span>';const mx=Math.max(...v.map(d=>d.rank)),mn=Math.min(...v.map(d=>d.rank)),rn=mx-mn||1,p=3;const pts=v.map((d,i)=>[p+(i/(v.length-1))*(w-p*2),p+((d.rank-mn)/rn)*(h-p*2)]);const im=v[v.length-1].rank<v[0].rank,cl=im?'var(--green)':'var(--red)';let s=`<svg width="${w}" height="${h}" style="display:block"><polyline points="${pts.map(p=>p.join(',')).join(' ')}" fill="none" stroke="${cl}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>`;pts.forEach(([x,y],i)=>{s+=`<circle cx="${x}" cy="${y}" r="${i===pts.length-1?3:1.2}" fill="${i===pts.length-1?cl:'#555'}"/>`});return s+'</svg>'}
 
 function chart(hist){const W=580,H=180,PL=40,PT=15,PB=25,PR=10;const v=hist.filter(d=>d.rank!=null);if(!v.length)return'<div style="color:var(--dim);padding:16px;font-size:13px">No data</div>';const mx=Math.max(...v.map(d=>d.rank),5),mn=Math.min(...v.map(d=>d.rank),1);const gx=i=>PL+(i/(hist.length-1||1))*(W-PL-PR),gy=r=>PT+((r-mn)/(mx-mn||1))*(H-PT-PB);const im=v.length>1&&v[v.length-1].rank<v[0].rank,cl=im?'var(--green)':'var(--amber)';const step=Math.max(1,Math.ceil((mx-mn)/5));let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px">`;for(let r=mn;r<=mx;r+=step){s+=`<line x1="${PL}" y1="${gy(r)}" x2="${W-PR}" y2="${gy(r)}" stroke="#222228"/><text x="${PL-6}" y="${gy(r)+4}" fill="#555" font-size="9" text-anchor="end" font-family="var(--mono)">#${r}</text>`}hist.forEach((d,i)=>{s+=`<text x="${gx(i)}" y="${H-5}" fill="#555" font-size="8" text-anchor="middle" font-family="var(--mono)">${d.date.slice(5)}</text>`});const ln=v.map(d=>`${gx(hist.indexOf(d))},${gy(d.rank)}`).join(' ');s+=`<polyline points="${ln}" fill="none" stroke="${cl}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`;hist.forEach((d,i)=>{if(d.rank==null)return;const il=i===hist.length-1;s+=`<circle cx="${gx(i)}" cy="${gy(d.rank)}" r="${il?4.5:2.5}" fill="${il?cl:'#444'}" stroke="#111" stroke-width="1.5"/>`;if(d.sponsored)s+=`<text x="${gx(i)}" y="${gy(d.rank)-10}" fill="var(--purple)" font-size="7" text-anchor="middle" font-family="var(--mono)">SP</text>`});return s+'</svg>'}
 
-// ── State ──
 let S={data:null,asin:null,exp:null,view:'organic',src:'',lastFetch:null};
 
-// ── SKU Mapping (saved in localStorage) ──
 const SKU_KEY='rank-tracker-sku-map';
 function loadSkuMap(){try{const s=localStorage.getItem(SKU_KEY);return s?JSON.parse(s):{}}catch{return{}}}
 function saveSkuMap(m){try{localStorage.setItem(SKU_KEY,JSON.stringify(m))}catch{}}
 let skuMap=loadSkuMap();
-function skuLabel(asin){return skuMap[asin]?skuMap[asin]:asin}
-function skuFull(asin){return skuMap[asin]?`${skuMap[asin]} (${asin})`:asin}
+
+// ── Variant Name Mapping (ASIN → "250ml", "100ml" etc) ──
+const VAR_KEY='rank-tracker-variant-map';
+function loadVarMap(){try{const s=localStorage.getItem(VAR_KEY);return s?JSON.parse(s):{}}catch{return{}}}
+function saveVarMap(m){try{localStorage.setItem(VAR_KEY,JSON.stringify(m))}catch{}}
+let varMap=loadVarMap();
+function varLabel(asinStr){
+  if(!asinStr)return'';
+  return asinStr.split('|').map(a=>{a=a.trim();if(!a)return'';return varMap[a]||a.slice(-4)}).filter(x=>x).join(', ');
+}
+function varTag(asinStr,isSP){
+  if(!asinStr)return'';
+  const parts=asinStr.split('|').map(a=>a.trim()).filter(a=>a);
+  if(!parts.length)return'';
+  return parts.map(a=>{
+    const nm=varMap[a]||a.slice(-4);
+    const sc=isSP?'color:var(--purple)':'';
+    const tc=isSP?'background:rgba(167,139,250,0.08);border-color:rgba(167,139,250,0.2)':'';
+    return`<span class="child-tag" style="${sc}" onclick="event.stopPropagation()">${nm}<div class="ct-tip" style="${tc}"><div class="ct-asin">${a}</div><div class="ct-name">${varMap[a]||'Not mapped — set in Settings'}</div><a class="ct-link" href="https://www.amazon.in/dp/${a}" target="_blank" rel="noopener">Open on Amazon ↗</a></div></span>`;
+  }).join(' ');
+}
 
 function getAsinData(){
   const data=S.data;if(!data||!data.length)return null;
@@ -78,7 +106,6 @@ function getAsinData(){
   return{asins,cur,ad,an,kws,dates,ks};
 }
 
-// ── Render ──
 function render(){
   const data=S.data;
   if(!data||!data.length){document.getElementById('app').innerHTML=`<div class="hdr"><div class="hdr-row"><div class="logo">📱</div><div><h1>Organic Rank Tracker</h1><div class="sub">Amazon Mobile View</div></div></div></div><div style="padding:60px 20px;text-align:center;color:var(--muted)"><h2 style="font-size:18px;margin-bottom:8px;color:var(--text)">No data loaded</h2><p style="font-size:13px;max-width:420px;margin:0 auto">Place <code style="color:var(--amber)">rank_history.json</code> in the same folder, or paste data below.</p></div>${impHTML()}`;return;}
@@ -92,45 +119,55 @@ function render(){
   const t3=le.filter(k=>k.l.organic_rank<=3).length;
   const spCount=ks.filter(k=>k.l?.our_sponsored_position).length;
 
+  // Product name map
+  const nameMap={};data.forEach(d=>{if(!nameMap[d.asin])nameMap[d.asin]=d.product_name||d.asin});
+
   let o=`<div class="hdr"><div class="hdr-row"><div class="logo">📱</div><div><h1>Organic Rank Tracker</h1><div class="sub">Amazon Mobile View • Daily Tracking</div></div></div>`;
-  if(asins.length>1){const nameMap={};data.forEach(d=>{if(!nameMap[d.asin])nameMap[d.asin]=d.product_name||d.asin});o+=`<div class="tabs">${asins.map(a=>`<button class="tab ${a===cur?'on':''}" onclick="SA('${a}')">${nameMap[a]||a}</button>`).join('')}</div>`}
+  if(asins.length>1){o+=`<div class="tabs">${asins.map(a=>`<button class="tab ${a===cur?'on':''}" onclick="SA('${a}')">${nameMap[a]||a}</button>`).join('')}</div>`}
   o+=`</div>`;
   o+=`<div class="status-bar"><div class="status-dot" style="background:${S.src==='file'?'var(--green)':'var(--amber)'}"></div>${S.src==='file'?'Live from rank_history.json':'Manual import'}${S.lastFetch?' • '+S.lastFetch:''}</div>`;
   o+=`<div class="atitle"><div class="nm">${an}</div><div class="cd">${skuMap[cur]?'SKU: '+skuMap[cur]+' • ':''}${cur}</div><div class="dt">Last: ${dates[dates.length-1]}</div></div>`;
   o+=`<div class="sts"><div class="st"><div class="lb">AVG RANK</div><div class="vl" style="color:var(--amber)">${avg?'#'+avg.toFixed(1):'—'}</div></div><div class="st"><div class="lb">PAGE 1</div><div class="vl" style="color:var(--green)">${p1}/${kws.length}</div></div><div class="st"><div class="lb">TOP 3</div><div class="vl" style="color:var(--blue)">${t3}</div></div><div class="st"><div class="lb">SPONSORED</div><div class="vl" style="color:var(--purple)">${spCount}/${kws.length}</div></div></div>`;
 
-  // View tabs
   o+=`<div class="view-tabs">`;
-  [{id:'organic',label:'📊 Organic'},{id:'sponsored',label:'💰 Sponsored'},{id:'competitors',label:'🏆 Competitors'},{id:'settings',label:'⚙️ SKU Map'}].forEach(v=>{
+  [{id:'organic',label:'📊 Organic'},{id:'sponsored',label:'💰 Sponsored'},{id:'competitors',label:'🏆 Competitors'},{id:'settings',label:'⚙️ Settings'}].forEach(v=>{
     o+=`<button class="vtab ${S.view===v.id?'on':''}" onclick="SV('${v.id}')">${v.label}</button>`;
   });
   o+=`</div>`;
 
   o+=`<div class="tw"><div class="tb">`;
-
   if(S.view==='organic') o+=renderOrganic(ks);
   else if(S.view==='sponsored') o+=renderSponsored(ks,ad,dates);
   else if(S.view==='competitors') o+=renderCompetitors(ks,ad);
   else if(S.view==='settings') o+=renderSettings(asins);
-
   o+=`</div></div>`;
   o+=impHTML();
   o+=`<div class="lg"><span style="color:var(--green)">● Top 3</span> · <span style="color:var(--green2)">● Top 8</span> · <span style="color:var(--amber)">● Top 20</span> · <span style="color:var(--orange)">● Top 40</span> · <span style="color:var(--red)">● 40+</span> · <span style="color:var(--purple)">SP = Sponsored</span></div>`;
-
   document.getElementById('app').innerHTML=o;
 }
 
 // ── TAB: Organic ──
 function renderOrganic(ks){
-  let o=`<div class="th" style="grid-template-columns:2fr 60px 55px 50px 50px 130px"><span>KEYWORD</span><span>RANK</span><span>MOVE</span><span>7D</span><span>SP</span><span>TREND</span></div>`;
+  const cols='2.2fr 55px 80px 55px 55px 80px 110px';
+  let o=`<div class="th" style="grid-template-columns:${cols}"><span>KEYWORD</span><span>RANK</span><span>CHILD</span><span>MOVE</span><span>SP POS</span><span>SP CHILD</span><span>TREND</span></div>`;
   ks.forEach(k=>{
-    const r=k.l?.organic_rank;const m=mv(r,k.p?.organic_rank);const io=S.exp===k.kw&&S.view==='organic';
-    o+=`<div class="kr ${io?'op':''}" style="grid-template-columns:2fr 60px 55px 50px 50px 130px" onclick="TK('${esc(k.kw)}')">
+    const r=k.l?.organic_rank;
+    const m=mv(r,k.p?.organic_rank);
+    const io=S.exp===k.kw&&S.view==='organic';
+
+    // Organic child ASIN
+    const orgChild=k.l?.organic_child||'';
+
+    // Sponsored info
+    const spPos=k.l?.our_sponsored_position;
+    const spChild=k.l?.sponsored_child||'';
+    o+=`<div class="kr ${io?'op':''}" style="grid-template-columns:${cols}" onclick="TK('${esc(k.kw)}')">
       <div><div class="kn">${k.kw}</div></div>
       <div><span class="rb" style="background:${rbg(r)};color:${rc(r)}">${r?'#'+r:'—'}</span></div>
+      <div>${varTag(orgChild,false)}</div>
       <div><span class="mb" style="color:${m.c};background:${m.b}">${m.t}</span></div>
-      <div style="font-size:11px;font-family:var(--mono);color:${k.wc>0?'var(--green)':k.wc<0?'var(--red)':'var(--dim)'}">${k.wc!=null?(k.wc>0?'+'+k.wc:k.wc):'—'}</div>
-      <div style="font-size:11px;font-family:var(--mono);color:${k.l?.our_sponsored_position?'var(--purple)':'#222'}">${k.l?.our_sponsored_position?'#'+k.l.our_sponsored_position:'—'}</div>
+      <div style="font-size:11px;font-family:var(--mono);color:${spPos?'var(--purple)':'#222'}">${spPos?'#'+spPos:'—'}</div>
+      <div>${varTag(spChild,true)}</div>
       <div>${spark(k.h)}</div>
     </div>`;
     if(io){
@@ -144,8 +181,8 @@ function renderOrganic(ks){
 
 // ── TAB: Sponsored ──
 function renderSponsored(ks,ad,dates){
-  let o=`<div class="th" style="grid-template-columns:2fr 70px 70px 130px"><span>KEYWORD</span><span>SP POS</span><span>ORG RANK</span><span>SP HISTORY</span></div>`;
-  // Sort: has sponsored first
+  const cols='2fr 55px 80px 55px 80px 110px';
+  let o=`<div class="th" style="grid-template-columns:${cols}"><span>KEYWORD</span><span>SP POS</span><span>SP CHILD</span><span>ORG</span><span>ORG CHILD</span><span>SP TREND</span></div>`;
   const sorted=[...ks].sort((a,b)=>{
     const aHas=a.l?.our_sponsored_position?1:0;
     const bHas=b.l?.our_sponsored_position?1:0;
@@ -153,40 +190,36 @@ function renderSponsored(ks,ad,dates){
   });
   sorted.forEach(k=>{
     const sp=k.l?.our_sponsored_position;
+    const spChild=k.l?.sponsored_child||'';
     const orgR=k.l?.organic_rank;
+    const orgChild=k.l?.organic_child||'';
     const io=S.exp===k.kw&&S.view==='sponsored';
-    // SP history sparkline (positions over time, lower=better)
     const spHist=k.h.map(h=>({date:h.date,rank:h.sponsored}));
 
-    o+=`<div class="kr ${io?'op':''}" style="grid-template-columns:2fr 70px 70px 130px" onclick="TK('${esc(k.kw)}')">
+    o+=`<div class="kr ${io?'op':''}" style="grid-template-columns:${cols}" onclick="TK('${esc(k.kw)}')">
       <div><div class="kn">${k.kw}</div></div>
       <div style="font-family:var(--mono);font-weight:700;color:${sp?'var(--purple)':'var(--dim)'}">${sp?'#'+sp:'—'}</div>
+      <div>${varTag(spChild,true)}</div>
       <div><span class="rb" style="background:${rbg(orgR)};color:${rc(orgR)};font-size:11px">${orgR?'#'+orgR:'—'}</span></div>
+      <div>${varTag(orgChild,false)}</div>
       <div>${spark(spHist)}</div>
     </div>`;
 
     if(io){
-      // Show all sponsored ads for this keyword (latest crawl)
       const latest=k.kd[k.kd.length-1];
       const spAds=latest?.sponsored_ads||[];
-      o+=`<div class="dp"><div class="hd">SPONSORED ADS — "${k.kw}" (${spAds.length} ads found)</div>`;
+      o+=`<div class="dp"><div class="hd">SPONSORED ADS — "${k.kw}" (${spAds.length} ads)</div>`;
       if(spAds.length>0){
-        spAds.forEach((ad,i)=>{
+        spAds.forEach(ad=>{
           o+=`<div style="display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #1a1a22;align-items:center">
             <div style="font-family:var(--mono);font-size:11px;color:var(--purple);min-width:60px">P${ad.page}:Pos${ad.pos}</div>
             <div style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:100px">${ad.asin}</div>
             <div style="font-size:11px;color:var(--text);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${ad.title||''}</div>
           </div>`;
         });
-      } else {
-        o+=`<div style="color:var(--dim);font-size:12px;padding:8px 0">No sponsored ad data available for this date</div>`;
-      }
-      // SP history dates
+      } else o+=`<div style="color:var(--dim);font-size:12px;padding:8px 0">No ad data for this date</div>`;
       o+=`<div class="dr" style="margin-top:12px">`;
-      k.h.forEach(h=>{
-        o+=`<div class="dc"><div class="d">${h.date.slice(5)}</div><div class="r" style="color:${h.sponsored?'var(--purple)':'var(--dim)'}">` +
-          `${h.sponsored?'#'+h.sponsored:'—'}</div></div>`;
-      });
+      k.h.forEach(h=>{o+=`<div class="dc"><div class="d">${h.date.slice(5)}</div><div class="r" style="color:${h.sponsored?'var(--purple)':'var(--dim)'}">${h.sponsored?'#'+h.sponsored:'—'}</div></div>`});
       o+=`</div></div>`;
     }
   });
@@ -200,21 +233,18 @@ function renderCompetitors(ks,ad){
     const io=S.exp===k.kw&&S.view==='competitors';
     const latest=k.kd[k.kd.length-1];
     const comps=latest?.competitors||[];
-
     o+=`<div class="kr ${io?'op':''}" style="grid-template-columns:2fr 60px 50px" onclick="TK('${esc(k.kw)}')">
       <div><div class="kn">${k.kw}</div></div>
       <div style="font-family:var(--mono);font-size:12px;color:var(--muted)">${comps.length}</div>
       <div style="font-size:10px;color:var(--dim)">${io?'▲':'▼'}</div>
     </div>`;
-
     if(io){
-      o+=`<div class="dp"><div class="hd">TOP ORGANIC RESULTS — "${k.kw}"</div>`;
+      o+=`<div class="dp"><div class="hd">TOP ORGANIC — "${k.kw}"</div>`;
       if(comps.length>0){
-        o+=`<div style="display:grid;grid-template-columns:35px 100px 1fr 55px 50px 55px 55px;padding:6px 0;font-size:9px;color:#555;letter-spacing:.05em;border-bottom:1px solid var(--border)">
-          <div>#</div><div>ASIN</div><div>TITLE</div><div style="text-align:center">PRICE</div><div style="text-align:center">RATING</div><div style="text-align:center">REVIEWS</div><div style="text-align:center">SP</div>
-        </div>`;
+        o+=`<div style="display:grid;grid-template-columns:30px 95px 1fr 50px 45px 50px 40px;padding:6px 0;font-size:9px;color:#555;letter-spacing:.05em;border-bottom:1px solid var(--border)">
+          <div>#</div><div>ASIN</div><div>TITLE</div><div style="text-align:center">PRICE</div><div style="text-align:center">RATE</div><div style="text-align:center">REV</div><div style="text-align:center">SP</div></div>`;
         comps.forEach(c=>{
-          o+=`<div style="display:grid;grid-template-columns:35px 100px 1fr 55px 50px 55px 55px;padding:7px 0;border-bottom:1px solid #12121a;align-items:center;font-size:11px">
+          o+=`<div style="display:grid;grid-template-columns:30px 95px 1fr 50px 45px 50px 40px;padding:7px 0;border-bottom:1px solid #12121a;align-items:center;font-size:11px">
             <div style="font-family:var(--mono);font-weight:700;color:${rc(c.rank)}">#${c.rank}</div>
             <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">${c.asin}</div>
             <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px">${c.title||''}</div>
@@ -224,41 +254,76 @@ function renderCompetitors(ks,ad){
             <div style="text-align:center">${c.has_sp?'<span class="sp-badge">SP</span>':''}</div>
           </div>`;
         });
-      } else {
-        o+=`<div style="color:var(--dim);font-size:12px;padding:8px 0">No competitor data — run crawler with latest version</div>`;
-      }
+      } else o+=`<div style="color:var(--dim);font-size:12px;padding:8px 0">No competitor data</div>`;
       o+=`</div>`;
     }
   });
   return o;
 }
 
-// ── TAB: Settings (SKU Mapping) ──
+// ── TAB: Settings ──
 function renderSettings(asins){
+  // Collect all child ASINs from data
+  const allChildAsins=new Set();
+  const childToFamily={};
+  if(S.data){
+    S.data.forEach(d=>{
+      const fam=d.product_name||d.asin;
+      // organic children
+      if(d.organic_child){d.organic_child.split('|').forEach(a=>{a=a.trim();if(a){allChildAsins.add(a);childToFamily[a]=fam}})}
+      // sponsored children
+      if(d.sponsored_child){d.sponsored_child.split('|').forEach(a=>{a=a.trim();if(a){allChildAsins.add(a);childToFamily[a]=fam}})}
+      // family_asins field
+      if(d.family_asins){d.family_asins.split('|').forEach(a=>{a=a.trim();if(a){allChildAsins.add(a);childToFamily[a]=fam}})}
+    });
+  }
+  const childList=[...allChildAsins].sort();
+
   let o=`<div style="padding:16px">
-    <div style="font-size:13px;font-weight:600;margin-bottom:4px">ASIN → SKU Mapping</div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">Map your ASINs to SKU codes. Shows SKU throughout the dashboard.</div>`;
+    <div style="font-size:15px;font-weight:700;margin-bottom:16px">⚙️ Settings</div>
+
+    <div style="font-size:13px;font-weight:600;margin-bottom:4px">📦 Variant Names</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Map each child ASIN to a variant name (e.g. "250ml", "100ml", "Pack of 2"). Shows in CHILD columns instead of raw ASINs.</div>`;
+
+  if(childList.length>0){
+    childList.forEach(a=>{
+      const val=varMap[a]||'';
+      const fam=childToFamily[a]||'';
+      o+=`<div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted);min-width:110px">${a}</div>
+        <div style="font-size:9px;color:var(--dim);min-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fam}</div>
+        <div style="font-size:11px;color:var(--dim)">→</div>
+        <input id="var_${a}" value="${val}" placeholder="e.g. 250ml" style="width:120px;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-family:var(--mono)"/>
+      </div>`;
+    });
+    o+=`<button class="bp" onclick="saveVar()" style="margin-top:8px">Save Variant Names</button>`;
+  } else {
+    o+=`<div style="color:var(--dim);font-size:12px">No child ASINs found — run the crawler first</div>`;
+  }
+
+  o+=`<div style="border-top:1px solid var(--border);margin:20px 0 16px"></div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:4px">🏷️ SKU Mapping</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Map primary ASINs to SKU codes.</div>`;
   asins.forEach(a=>{
     const val=skuMap[a]||'';
-    o+=`<div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
+    o+=`<div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
       <div style="font-family:var(--mono);font-size:11px;color:var(--muted);min-width:120px">${a}</div>
-      <div style="font-size:11px;color:var(--dim);min-width:15px">→</div>
-      <input id="sku_${a}" value="${val}" placeholder="Enter SKU..." style="flex:1;padding:7px 12px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-family:var(--mono)"/>
+      <div style="font-size:11px;color:var(--dim)">→</div>
+      <input id="sku_${a}" value="${val}" placeholder="Enter SKU..." style="flex:1;padding:6px 10px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-family:var(--mono)"/>
     </div>`;
   });
-  o+=`<button class="bp" onclick="saveSku([${asins.map(a=>"'"+a+"'").join(',')}])" style="margin-top:6px">Save SKU Mapping</button>
-    <div style="font-size:10px;color:var(--dim);margin-top:8px">Saved in your browser — persists across sessions</div>
-  </div>`;
+  o+=`<button class="bp" onclick="saveSku([${asins.map(a=>"'"+a+"'").join(',')}])" style="margin-top:8px">Save SKU Mapping</button>
+    <div style="font-size:10px;color:var(--dim);margin-top:10px">All mappings saved in your browser localStorage</div></div>`;
   return o;
 }
 
 function impHTML(){return`<div class="imp"><details class="impb"><summary class="imps">📥 Import Data (paste rank_history.json)</summary><div class="impc"><textarea id="ia" placeholder="Paste contents of rank_data/rank_history.json here..."></textarea><div class="btns"><button class="bp" onclick="DI()">Import</button><button class="bs" onclick="DE()">Export JSON</button><button class="bs" onclick="DR()">Reload from File</button></div><div style="font-size:10px;color:var(--dim);margin-top:6px">Tip: place rank_history.json in same folder → loads automatically</div></div></details></div>`}
 
-// ── Actions ──
 window.SA=function(a){S.asin=a;S.exp=null;render()};
 window.SV=function(v){S.view=v;S.exp=null;render()};
 window.TK=function(k){S.exp=S.exp===k?null:k;render()};
 window.saveSku=function(asins){asins.forEach(a=>{const el=document.getElementById('sku_'+a);if(el){const v=el.value.trim();if(v)skuMap[a]=v;else delete skuMap[a]}});saveSkuMap(skuMap);render();alert('SKU mapping saved!')};
+window.saveVar=function(){document.querySelectorAll('[id^="var_"]').forEach(el=>{const asin=el.id.replace('var_','');const v=el.value.trim();if(v)varMap[asin]=v;else delete varMap[asin]});saveVarMap(varMap);render();alert('Variant names saved!')};
 window.DI=function(){const ta=document.getElementById('ia');if(!ta||!ta.value.trim())return;try{const p=JSON.parse(ta.value);if(Array.isArray(p)&&p.length>0){const key=d=>`${d.asin}|${d.keyword}|${d.date}`;const newKeys=new Set(p.map(key));const exist=S.data||[];const kept=exist.filter(d=>!newKeys.has(key(d)));S.data=[...kept,...p].sort((a,b)=>(a.date||'').localeCompare(b.date||''));S.src='paste';S.lastFetch=new Date().toLocaleTimeString();S.exp=null;render();alert(`Imported! ${p.length} entries loaded`);}else alert('No data found')}catch(e){alert('Invalid JSON\n'+e.message)}};
 window.DE=function(){if(!S.data)return;const b=new Blob([JSON.stringify(S.data,null,2)],{type:'application/json'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='rank_history.json';a.click();URL.revokeObjectURL(u)};
 window.DR=function(){loadFromFile()};
