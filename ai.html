@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Recommendations — Chemist at Play</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--card:#111118;--card2:#15151d;--border:#1c1c25;--text:#e4e4e7;--muted:#6b7280;--dim:#3a3a44;--amber:#f59e0b;--green:#10b981;--green2:#34d399;--red:#ef4444;--orange:#f97316;--blue:#3b82f6;--purple:#a78bfa;--cyan:#22d3ee;--font:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace}
+*{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}button{font-family:var(--font);cursor:pointer}
+.topnav{display:flex;gap:0;border-bottom:1px solid var(--border);background:#08080d}
+.topnav a{padding:10px 20px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;transition:all .15s}
+.topnav a.on{color:var(--cyan);border-bottom-color:var(--cyan)}
+.topnav a:hover{color:var(--text);background:rgba(255,255,255,.02)}
+.hdr{background:linear-gradient(135deg,#0a0a0f,#14141e);padding:16px 22px}
+.hdr-row{display:flex;align-items:center;gap:12px}.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#22d3ee,#0891b2);display:flex;align-items:center;justify-content:center;font-size:16px}
+.hdr h1{font-size:16px;font-weight:700}.hdr .sub{font-size:10px;color:var(--muted);margin-top:1px}
+.sts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 22px}
+.st{background:var(--card);border-radius:8px;padding:10px 13px;border:1px solid var(--border)}.st .lb{font-size:8px;color:#555;letter-spacing:.08em;margin-bottom:3px}.st .vl{font-size:16px;font-weight:700;font-family:var(--mono)}.st .ch{font-size:9px;margin-top:2px}
+.sec{padding:0 22px 14px}
+.sec-title{font-size:13px;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.date-tabs{display:flex;gap:6px;padding:8px 22px;flex-wrap:wrap}
+.dtab{padding:5px 14px;border-radius:6px;font-size:10px;font-family:var(--mono);border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;transition:all .15s}
+.dtab.on{border-color:var(--cyan);background:rgba(34,211,238,.1);color:var(--cyan)}
+.dtab:hover{background:var(--card2)}
+.ai-report{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px 24px;font-size:13px;line-height:1.8;color:var(--text);white-space:pre-wrap;word-wrap:break-word}
+.ai-report h1,.ai-report h2,.ai-report h3{color:var(--cyan);margin:16px 0 8px;font-size:15px}
+.ai-report strong,.ai-report b{color:var(--amber)}
+.ai-section{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:10px}
+.ai-section-title{font-size:13px;font-weight:600;margin-bottom:6px;color:var(--cyan);display:flex;align-items:center;gap:8px}
+.action-item{padding:10px 14px;border-bottom:1px solid var(--border);font-size:12px;line-height:1.6;display:flex;gap:10px;align-items:flex-start}
+.action-item:last-child{border-bottom:none}
+.action-icon{font-size:14px;flex-shrink:0;margin-top:2px}
+.action-text{flex:1}
+.action-metric{font-family:var(--mono);font-weight:600;font-size:11px}
+.priority-high{border-left:3px solid var(--red);padding-left:12px}
+.priority-med{border-left:3px solid var(--amber);padding-left:12px}
+.priority-low{border-left:3px solid var(--green);padding-left:12px}
+.quick-win{background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.bleeding-alert{background:rgba(239,68,68,.06);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.synergy-card{background:rgba(34,211,238,.04);border:1px solid rgba(34,211,238,.15);border-radius:8px;padding:12px 16px;margin-bottom:8px}
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{text-align:left;padding:7px 8px;font-size:8px;color:#555;letter-spacing:.06em;font-weight:500;border-bottom:1px solid var(--border);background:var(--card)}
+.tbl th.r{text-align:right}.tbl th.c{text-align:center}
+.tbl td{padding:6px 8px;border-bottom:1px solid #0e0e14}.tbl td.r{text-align:right;font-family:var(--mono);font-size:10px}.tbl td.c{text-align:center}
+.tbl-wrap{background:var(--card);border-radius:8px;border:1px solid var(--border);overflow:auto;max-height:400px}
+.pill{display:inline-block;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-size:9px;font-weight:600}
+.empty{padding:40px;text-align:center;color:var(--dim);font-size:13px}
+.ld{display:flex;align-items:center;justify-content:center;min-height:60vh;flex-direction:column;gap:12px;color:var(--muted)}
+.spin{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--cyan);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media(max-width:700px){.sts{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+<div class="topnav">
+<a href="index.html">Organic Tracker</a>
+<a href="ads.html">Ads Intelligence</a>
+<a href="ai.html" class="on">AI Recommendations</a>
+</div>
+<div id="app"><div class="ld"><div class="spin"></div><div>Loading data...</div></div></div>
+<script>
+let S={rank:[],ads:null,ai:null,selDate:null};
+
+// ── Helpers ──
+function acC(a){if(a==null||!isFinite(a))return'var(--dim)';if(a<=25)return'var(--green)';if(a<=40)return'var(--green2)';if(a<=60)return'var(--amber)';if(a<=80)return'var(--orange)';return'var(--red)'}
+function rkC(r){if(!r)return'var(--dim)';if(r<=3)return'var(--green)';if(r<=8)return'var(--green2)';if(r<=20)return'var(--amber)';return'var(--red)'}
+function rkBg(r){if(!r)return'transparent';if(r<=3)return'#052e1644';if(r<=8)return'#064e3b33';if(r<=20)return'#42200633';return'#450a0a44'}
+function fmt(n){if(n==null||isNaN(n))return'—';if(Math.abs(n)>=100000)return'₹'+(n/1000).toFixed(0)+'K';if(Math.abs(n)>=1000)return'₹'+Math.round(n).toLocaleString('en-IN');return'₹'+Math.round(n)}
+function fN(n){if(n==null)return'—';return Math.round(n).toLocaleString('en-IN')}
+function pct(n){if(n==null||isNaN(n))return'—';return n.toFixed(1)+'%'}
+
+// ── Data Analysis (auto-generated insights when no Claude AI report) ──
+function analyzeData(){
+  const ads=Array.isArray(S.ads)?S.ads[S.ads.length-1]:S.ads;
+  const rank=S.rank;
+  if(!ads&&!rank.length)return null;
+
+  const insights={bleeders:[],scalable:[],orgStrong:[],noOrg:[],topAsins:[],campIssues:[]};
+
+  // Rank data
+  const rankDates=[...new Set(rank.map(d=>d.date))].sort();
+  const latestRankDate=rankDates[rankDates.length-1]||'';
+  const latestRank=rank.filter(d=>d.date===latestRankDate);
+  const rankMap={};latestRank.forEach(d=>{rankMap[d.keyword]={rank:d.organic_rank,product:d.product_name};});
+
+  // Ads data
+  const spTerms=ads?.sp_search_terms||[];
+  const termAgg={};
+  spTerms.forEach(r=>{
+    const kw=r.searchTerm||'';
+    if(!termAgg[kw])termAgg[kw]={kw,spend:0,sales:0,clicks:0,units:0};
+    termAgg[kw].spend+=parseFloat(r.cost||0);
+    termAgg[kw].sales+=parseFloat(r.sales7d||0);
+    termAgg[kw].clicks+=parseInt(r.clicks||0);
+    termAgg[kw].units+=parseInt(r.unitsSoldClicks7d||0);
+  });
+  const terms=Object.values(termAgg).map(t=>{
+    t.acos=t.sales>0?(t.spend/t.sales*100):(t.spend>0?Infinity:0);
+    t.orgRank=rankMap[t.kw]?.rank||null;
+    t.product=rankMap[t.kw]?.product||'';
+    return t;
+  });
+
+  // Bleeders: ACOS > 80% and spend > ₹500
+  insights.bleeders=terms.filter(t=>(isFinite(t.acos)&&t.acos>80&&t.spend>500)||(!isFinite(t.acos)&&t.spend>500)).sort((a,b)=>b.spend-a.spend).slice(0,15);
+
+  // Scalable: ACOS < 25% and sales > ₹1000
+  insights.scalable=terms.filter(t=>isFinite(t.acos)&&t.acos>0&&t.acos<=25&&t.sales>1000).sort((a,b)=>b.sales-a.sales).slice(0,15);
+
+  // Organic strong + running ads (spend > ₹500)
+  insights.orgStrong=terms.filter(t=>t.orgRank&&t.orgRank<=3&&t.spend>500).sort((a,b)=>b.spend-a.spend).slice(0,15);
+
+  // No organic but high spend
+  insights.noOrg=terms.filter(t=>!t.orgRank&&t.spend>1000).sort((a,b)=>b.spend-a.spend).slice(0,15);
+
+  // ASIN performance
+  const prods=ads?.sp_products||[];
+  const asinAgg={};
+  prods.forEach(r=>{
+    const a=r.advertisedAsin||'';if(!a)return;
+    if(!asinAgg[a])asinAgg[a]={asin:a,sku:r.advertisedSku||'',spend:0,sales:0,units:0};
+    asinAgg[a].spend+=parseFloat(r.cost||0);asinAgg[a].sales+=parseFloat(r.sales7d||0);asinAgg[a].units+=parseInt(r.unitsSoldClicks7d||0);
+  });
+  insights.topAsins=Object.values(asinAgg).map(a=>{a.acos=a.sales>0?(a.spend/a.sales*100):0;return a}).sort((a,b)=>b.spend-a.spend).slice(0,10);
+
+  // Campaign issues (ACOS > 70%)
+  const camps=ads?.sp_campaigns||[];
+  const campAgg={};
+  camps.forEach(r=>{
+    const cn=r.campaignName||'';
+    if(!campAgg[cn])campAgg[cn]={name:cn,spend:0,sales:0};
+    campAgg[cn].spend+=parseFloat(r.cost||0);campAgg[cn].sales+=parseFloat(r.sales7d||0);
+  });
+  insights.campIssues=Object.values(campAgg).filter(c=>c.spend>1000&&c.sales>0&&(c.spend/c.sales*100)>70).map(c=>{c.acos=c.spend/c.sales*100;return c}).sort((a,b)=>b.spend-a.spend).slice(0,10);
+
+  // Totals
+  const totalSpend=terms.reduce((s,t)=>s+t.spend,0);
+  const totalSales=terms.reduce((s,t)=>s+t.sales,0);
+  const wastedSpend=insights.bleeders.reduce((s,t)=>s+t.spend,0);
+  const savingsFromOrgStrong=insights.orgStrong.reduce((s,t)=>s+t.spend,0);
+  const scaleOpportunity=insights.scalable.reduce((s,t)=>s+t.sales,0);
+
+  return{insights,totalSpend,totalSales,wastedSpend,savingsFromOrgStrong,scaleOpportunity,terms,latestRankDate};
+}
+
+function render(){
+  const analysis=analyzeData();
+  const aiReports=S.ai||[];
+  const hasAiReport=aiReports.length>0;
+  const selectedAi=S.selDate?aiReports.find(r=>r.date===S.selDate):aiReports[aiReports.length-1];
+
+  let o='';
+
+  // Header
+  o+=`<div class="hdr"><div class="hdr-row"><div class="logo">🤖</div><div><h1>AI Recommendations</h1><div class="sub">Organic + Ads Intelligence • Daily Action Items</div></div></div></div>`;
+
+  if(!analysis&&!hasAiReport){
+    o+=`<div class="empty"><h3>No data available</h3><p style="margin-top:8px">Run the crawler and ads pull first, then run:<br><code style="color:var(--cyan)">python ai_recommendations.py</code></p></div>`;
+    document.getElementById('app').innerHTML=o;return;
+  }
+
+  // AI Report date tabs (if multiple reports exist)
+  if(hasAiReport&&aiReports.length>1){
+    o+=`<div class="date-tabs">`;
+    aiReports.slice(-10).forEach(r=>{
+      const isOn=(selectedAi&&selectedAi.date===r.date);
+      o+=`<button class="dtab ${isOn?'on':''}" onclick="selDate('${r.date}')">${r.date}</button>`;
+    });
+    o+=`</div>`;
+  }
+
+  // Stats cards (from auto-analysis)
+  if(analysis){
+    const a=analysis;
+    o+=`<div class="sts">`;
+    o+=`<div class="st"><div class="lb">WASTED SPEND</div><div class="vl" style="color:var(--red)">${fmt(a.wastedSpend)}</div><div class="ch" style="color:var(--red)">${a.insights.bleeders.length} keywords</div></div>`;
+    o+=`<div class="st"><div class="lb">POTENTIAL SAVINGS</div><div class="vl" style="color:var(--green)">${fmt(a.savingsFromOrgStrong)}</div><div class="ch" style="color:var(--green)">Organic strong + ads</div></div>`;
+    o+=`<div class="st"><div class="lb">SCALE OPPORTUNITY</div><div class="vl" style="color:var(--cyan)">${fmt(a.scaleOpportunity)}</div><div class="ch" style="color:var(--cyan)">${a.insights.scalable.length} keywords</div></div>`;
+    o+=`<div class="st"><div class="lb">CAMPAIGNS TO FIX</div><div class="vl" style="color:var(--amber)">${a.insights.campIssues.length}</div><div class="ch" style="color:var(--amber)">ACOS &gt;70%</div></div>`;
+    o+=`</div>`;
+  }
+
+  // ── Claude AI Report (if exists) ──
+  if(selectedAi&&selectedAi.recommendations){
+    o+=`<div class="sec"><div class="sec-title">🤖 Claude AI Analysis — ${selectedAi.date}</div>`;
+    o+=`<div class="ai-report">${formatAiReport(selectedAi.recommendations)}</div></div>`;
+  }
+
+  // ── Auto-generated Insights (always shown) ──
+  if(analysis){
+    const a=analysis;
+
+    // Bleeding keywords
+    if(a.insights.bleeders.length){
+      o+=`<div class="sec"><div class="sec-title" style="color:var(--red)">🩸 Bleeding Keywords — Immediate Action Required</div>`;
+      o+=`<div class="bleeding-alert">Wasted <span class="action-metric" style="color:var(--red)">${fmt(a.wastedSpend)}</span> on ${a.insights.bleeders.length} keywords with ACOS &gt;80% or zero sales. Reduce bids by 30-50% or add as negative keywords.</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>KEYWORD</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">CLICKS</th><th class="c">ORG RANK</th><th>ACTION</th></tr></thead><tbody>`;
+      a.insights.bleeders.forEach(t=>{
+        const acos=isFinite(t.acos)?t.acos.toFixed(0)+'%':'∞';
+        const ac=isFinite(t.acos)?acC(t.acos):'var(--red)';
+        let rk='—';if(t.orgRank)rk=`<span class="pill" style="background:${rkBg(t.orgRank)};color:${rkC(t.orgRank)}">#${t.orgRank}</span>`;
+        const action=t.sales===0?'Negate keyword':'Reduce bid 50%';
+        o+=`<tr><td>${t.kw}</td><td class="r">${fmt(t.spend)}</td><td class="r" style="color:var(--green)">${fmt(t.sales)}</td><td class="c"><span class="pill" style="color:${ac}">${acos}</span></td><td class="r">${fN(t.clicks)}</td><td class="c">${rk}</td><td style="font-size:10px;color:var(--red);font-weight:600">${action}</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+
+    // Scalable keywords
+    if(a.insights.scalable.length){
+      o+=`<div class="sec"><div class="sec-title" style="color:var(--green)">🚀 Scale These Keywords — Low ACOS, High Potential</div>`;
+      o+=`<div class="quick-win">These ${a.insights.scalable.length} keywords have ACOS &lt;25% with sales &gt;₹1K. Increase bids by 20-40% to capture more volume. Potential: <span class="action-metric" style="color:var(--green)">${fmt(a.scaleOpportunity)}</span></div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>KEYWORD</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">UNITS</th><th class="c">ORG RANK</th><th>ACTION</th></tr></thead><tbody>`;
+      a.insights.scalable.forEach(t=>{
+        let rk='—';if(t.orgRank)rk=`<span class="pill" style="background:${rkBg(t.orgRank)};color:${rkC(t.orgRank)}">#${t.orgRank}</span>`;
+        o+=`<tr><td>${t.kw}</td><td class="r">${fmt(t.spend)}</td><td class="r" style="color:var(--green)">${fmt(t.sales)}</td><td class="c"><span class="pill" style="color:var(--green)">${t.acos.toFixed(0)}%</span></td><td class="r">${t.units}</td><td class="c">${rk}</td><td style="font-size:10px;color:var(--green);font-weight:600">Increase bid 30%</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+
+    // Organic strong + running ads
+    if(a.insights.orgStrong.length){
+      o+=`<div class="sec"><div class="sec-title" style="color:var(--cyan)">🌿 Organic Strong + Running Ads — Save Money</div>`;
+      o+=`<div class="synergy-card">These keywords rank top 3 organically AND have ad spend &gt;₹500. Potential savings: <span class="action-metric" style="color:var(--cyan)">${fmt(a.savingsFromOrgStrong)}</span>. Consider reducing bids — organic is doing the work.</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>KEYWORD</th><th class="c">ORG RANK</th><th class="r">AD SPEND</th><th class="r">AD SALES</th><th class="c">ACOS</th><th>PRODUCT</th><th>ACTION</th></tr></thead><tbody>`;
+      a.insights.orgStrong.forEach(t=>{
+        o+=`<tr><td>${t.kw}</td><td class="c"><span class="pill" style="background:${rkBg(t.orgRank)};color:${rkC(t.orgRank)}">#${t.orgRank}</span></td><td class="r">${fmt(t.spend)}</td><td class="r" style="color:var(--green)">${fmt(t.sales)}</td><td class="c"><span class="pill" style="color:${acC(t.acos)}">${isFinite(t.acos)?t.acos.toFixed(0)+'%':'—'}</span></td><td style="font-size:10px;color:var(--muted)">${t.product}</td><td style="font-size:10px;color:var(--cyan);font-weight:600">Reduce bid 40%</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+
+    // No organic rank but spending
+    if(a.insights.noOrg.length){
+      o+=`<div class="sec"><div class="sec-title" style="color:var(--blue)">🔍 No Organic Rank — Ads Only Keywords</div>`;
+      o+=`<div style="background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:11px">These high-spend keywords have no organic ranking. Optimize your listings for these terms to build organic presence.</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>KEYWORD</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">CLICKS</th><th>ACTION</th></tr></thead><tbody>`;
+      a.insights.noOrg.forEach(t=>{
+        const acos=isFinite(t.acos)?t.acos.toFixed(0)+'%':'∞';
+        const action=isFinite(t.acos)&&t.acos<=40?'Optimize listing SEO':'Review targeting';
+        o+=`<tr><td>${t.kw}</td><td class="r">${fmt(t.spend)}</td><td class="r" style="color:var(--green)">${fmt(t.sales)}</td><td class="c"><span class="pill" style="color:${acC(t.acos)}">${acos}</span></td><td class="r">${fN(t.clicks)}</td><td style="font-size:10px;color:var(--blue);font-weight:600">${action}</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+
+    // Campaign issues
+    if(a.insights.campIssues.length){
+      o+=`<div class="sec"><div class="sec-title" style="color:var(--amber)">⚠️ Campaigns Needing Attention — ACOS &gt;70%</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>CAMPAIGN</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th>ACTION</th></tr></thead><tbody>`;
+      a.insights.campIssues.forEach(c=>{
+        const action=c.acos>100?'Pause or restructure':'Reduce bids 20-30%';
+        o+=`<tr><td style="font-size:10px">${c.name}</td><td class="r">${fmt(c.spend)}</td><td class="r" style="color:var(--green)">${fmt(c.sales)}</td><td class="c"><span class="pill" style="color:${acC(c.acos)}">${c.acos.toFixed(0)}%</span></td><td style="font-size:10px;color:var(--amber);font-weight:600">${action}</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+
+    // ASIN Performance Summary
+    if(a.insights.topAsins.length){
+      o+=`<div class="sec"><div class="sec-title">📦 ASIN Ad Performance</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th>ASIN</th><th>SKU</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">UNITS</th><th>VERDICT</th></tr></thead><tbody>`;
+      a.insights.topAsins.forEach(t=>{
+        let verdict='',vc='var(--muted)';
+        if(t.acos<=30){verdict='Profitable — scale';vc='var(--green)';}
+        else if(t.acos<=50){verdict='OK — optimize';vc='var(--amber)';}
+        else if(t.acos<=70){verdict='High — reduce bids';vc='var(--orange)';}
+        else{verdict='Bleeding — fix or pause';vc='var(--red)';}
+        o+=`<tr><td style="font-family:var(--mono);font-size:10px"><a href="https://www.amazon.in/dp/${t.asin}" target="_blank" style="color:var(--blue);text-decoration:none">${t.asin}</a></td><td style="font-size:10px;color:var(--muted)">${t.sku}</td><td class="r">${fmt(t.spend)}</td><td class="r" style="color:var(--green)">${fmt(t.sales)}</td><td class="c"><span class="pill" style="color:${acC(t.acos)}">${t.acos.toFixed(0)}%</span></td><td class="r">${t.units}</td><td style="font-size:10px;color:${vc};font-weight:600">${verdict}</td></tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+  }
+
+  // Setup instructions if no Claude report
+  if(!hasAiReport){
+    o+=`<div class="sec"><div class="ai-section"><div class="ai-section-title">🔑 Enable Claude AI Analysis</div><div style="font-size:12px;color:var(--muted);line-height:1.6">
+      <p>The above insights are auto-generated from your data. For deeper AI analysis with specific bid/budget recommendations:</p>
+      <p style="margin-top:8px">1. Get an API key from <a href="https://console.anthropic.com" target="_blank" style="color:var(--cyan)">console.anthropic.com</a></p>
+      <p>2. Add to your .env file: <code style="color:var(--amber)">ANTHROPIC_API_KEY=sk-ant-...</code></p>
+      <p>3. Run: <code style="color:var(--amber)">python ai_recommendations.py</code></p>
+      <p style="margin-top:8px">Claude will analyze organic ranks + ads data together and give specific daily action items.</p>
+    </div></div></div>`;
+  }
+
+  document.getElementById('app').innerHTML=o;
+}
+
+function formatAiReport(text){
+  // Convert markdown-ish text to styled HTML
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h2>$1</h2>')
+    .replace(/^# (.+)$/gm,'<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.+)$/gm,'<div style="padding-left:12px;border-left:2px solid var(--border);margin:4px 0">$1</div>')
+    .replace(/^(\d+)\. (.+)$/gm,'<div style="padding-left:12px;margin:4px 0"><span style="color:var(--cyan);font-weight:600">$1.</span> $2</div>');
+}
+
+// ── Actions ──
+window.selDate=function(d){S.selDate=d;render()};
+
+// ── Load ──
+async function loadAll(){
+  let ok=0;
+  try{const r=await fetch('./rank_history.json?t='+Date.now());if(r.ok){S.rank=await r.json();ok++}}catch{}
+  try{const r=await fetch('./ads_data.json?t='+Date.now());if(r.ok){S.ads=await r.json();ok++}}catch{}
+  try{const r=await fetch('./ai_recommendations.json?t='+Date.now());if(r.ok){S.ai=await r.json()}}catch{}
+  if(ok>0)render();
+  else document.getElementById('app').innerHTML='<div class="empty">No data found. Run crawler + ads pull first.</div>';
+}
+loadAll();
+</script>
+</body>
+</html>
