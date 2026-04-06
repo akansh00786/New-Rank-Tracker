@@ -207,8 +207,8 @@ function render(){
   // Brand cards (on overview only)
   if(S.tab==='overview'&&S.brand==='ALL'&&allBrands.length>1){
     o+=`<div style="padding-top:10px"></div><div class="brand-cards">`;
-    allBrands.forEach(bd=>{const sp=dtF(bd.sp_search_terms||[]);const sb=dtF(bd.sb_search_terms||[]);const spS=sp.reduce((s,r)=>s+parseFloat(r.cost||0),0);const spSl=sp.reduce((s,r)=>s+parseFloat(r.sales7d||0),0);const sbS=sb.reduce((s,r)=>s+parseFloat(r.cost||0),0);const total=spS+sbS;const acos=spSl>0?(spS/spSl*100):0;
-    o+=`<div class="brand-card" onclick="setBrand('${bd.brand}')"><div class="bc-name">${bd.brand}</div><div class="bc-row"><span class="bc-label">Spend</span><span class="bc-val" style="color:var(--amber)">${fmt(total)}</span></div><div class="bc-row"><span class="bc-label">Sales</span><span class="bc-val" style="color:var(--green)">${fmt(spSl)}</span></div><div class="bc-row"><span class="bc-label">ACOS</span><span class="bc-val" style="color:${acC(acos)}">${pct(acos)}</span></div></div>`;});
+    allBrands.forEach(bd=>{const sp=dtF(bd.sp_search_terms||[]);const sb=dtF(bd.sb_search_terms||[]);const sd=dtF(bd.sd_campaigns||[]);const spS=sp.reduce((s,r)=>s+parseFloat(r.cost||0),0);const spSl=sp.reduce((s,r)=>s+parseFloat(r.sales7d||0),0);const sbS=sb.reduce((s,r)=>s+parseFloat(r.cost||0),0);const sdS=sd.reduce((s,r)=>s+parseFloat(r.cost||0),0);const sdSl=sd.reduce((s,r)=>s+parseFloat(r.sales||0),0);const total=spS+sbS+sdS;const totalSales=spSl+sdSl;const acos=totalSales>0?(total/totalSales*100):0;
+    o+=`<div class="brand-card" onclick="setBrand('${bd.brand}')"><div class="bc-name">${bd.brand}</div><div class="bc-row"><span class="bc-label">Spend</span><span class="bc-val" style="color:var(--amber)">${fmt(total)}</span></div><div class="bc-row"><span class="bc-label">Sales</span><span class="bc-val" style="color:var(--green)">${fmt(totalSales)}</span></div><div class="bc-row"><span class="bc-label">ACOS</span><span class="bc-val" style="color:${acC(acos)}">${pct(acos)}</span></div></div>`;});
     o+=`</div>`;
   }
 
