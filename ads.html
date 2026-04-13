@@ -10,6 +10,18 @@
 <style>
 :root{--bg:#0a0a0f;--card:#111118;--card2:#15151d;--border:#1c1c25;--text:#e4e4e7;--muted:#6b7280;--dim:#3a3a44;--amber:#f59e0b;--green:#10b981;--green2:#34d399;--red:#ef4444;--orange:#f97316;--blue:#3b82f6;--purple:#a78bfa;--cyan:#22d3ee;--font:'DM Sans',system-ui,sans-serif;--mono:'JetBrains Mono','Courier New',monospace}
 *{margin:0;padding:0;box-sizing:border-box}body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh}button{font-family:var(--font);cursor:pointer}
+@keyframes glow{0%{box-shadow:0 0 4px rgba(0,229,255,.3)}100%{box-shadow:0 0 12px rgba(0,229,255,.5),0 0 20px rgba(124,58,237,.3)}}
+.jarvis-panel{position:fixed;right:0;top:0;width:420px;height:100vh;background:#0d0d14;border-left:1px solid var(--border);z-index:1000;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .3s ease}
+.jarvis-panel.open{transform:translateX(0)}
+.jarvis-hdr{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.jarvis-msgs{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:12px}
+.jarvis-msg{max-width:95%;padding:10px 14px;border-radius:12px;font-size:12px;line-height:1.6;white-space:pre-wrap}
+.jarvis-msg.user{align-self:flex-end;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);color:#00e5ff}
+.jarvis-msg.ai{align-self:flex-start;background:var(--card2);border:1px solid var(--border);color:var(--text)}
+.jarvis-msg.ai .thinking{color:var(--muted);font-style:italic}
+.jarvis-input{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px}
+.jarvis-input input{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:12px;font-family:var(--font)}
+.jarvis-input button{background:linear-gradient(135deg,#00e5ff,#7c3aed);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:12px;font-weight:600}
 .topnav{display:flex;gap:0;border-bottom:1px solid var(--border);background:#08080d}
 .topnav a{padding:10px 20px;font-size:12px;font-weight:600;color:var(--muted);text-decoration:none;border-bottom:2px solid transparent;transition:all .15s}
 .topnav a.on{color:var(--purple);border-bottom-color:var(--purple)}
@@ -131,14 +143,15 @@
 <body>
 <div class="topnav">
 <a href="index.html">Organic Tracker</a>
-<a href="ads.html" class="on">Ads Intelligence</a>
+<a href="ads.html" class="on" id="nav-ads" onclick="if(S){S.page='ads';S.tab='overview';render();return false;}">Ads Intelligence</a>
+<a href="ads.html#business" id="nav-biz" onclick="if(S){S.page='business';render();return false;}">Business</a>
 <a href="ai.html">AI Recommendations</a>
 <a href="sales.html">Sales</a>
 </div>
 <div id="app"><div class="ld"><div class="spin"></div><div>Loading...</div></div></div>
 <script>
 const MY_BRANDS=['chemist at play','cap','bare anatomy','bear anatomy','sunscoop','onesto','innovist'];
-const COMP_BRANDS=["dr. bakshi's bakson's homoeopathy","l'oréal professionnel paris",'personal touch skincare','tnw - the natural wash','bombay shaving company','love beauty and planet','plix - the plant fix','get nectar happiness','proven honest derma','botanical luxuriate','kerrato hair fibres','biogreen healthcare','godrej professional','streax professional','bajaj almond drops','plix the plant fix','parachute advansed','raaga professional','the plant fix plix','fair and handsome','bella vita luxury','molecular company','tugain essentials','conscious chemist','caveman naturals','head & shoulders','the pink foundry',"d'alba piedmont",'the man company','eclipse solaire','carbamide forte','sv professional','wild stone code','herbal essences','nuskhe by paras','vatika naturals',"herbs 'n' hopes",'touche wellness','lacto calamine','the skin story','organix mantra','yardley london','nourish mantra','skinn by titan','ashba botanics','mystiq living','mysore sandal','clean & clear',"l'oreal paris",'glow & lovely','jovees herbal','dermis oracle','khadi natural','the face shop','avimee herbal','alps goodness','follihair new','the body shop','hilary rhoda','swiss beauty','vilvah store','skininspired','farming drop','indus valley','bioguardiome','the derma co','reginald men','the bare bar','moxie beauty','man matters','clinic plus','miss lirenn','be bodywise','park avenue','deconstruct','bio mystery','aroma magic','photostable',"dr. sheth's",'thick fiber','baidyanath','neutrogena','enchanteur','ghar soaps','wild stone','rustic art',"dr batra's",'mintop pro','fatchemist','urbangabru','sparkxlife','maybelline','scalpe pro','aqualogica','soulflower','minimalist','dermatouch','chicnutrix','mamaearth','bold care','swandeals','magnemite','palmolive','b natural','stylemake','la shield','indulekha','mcaffeine','muuchstac','thecurlco','kesh king','bellavita',"re' equil",'acne - uv','cuticapil','parachute','nat habit','dot & key','nivea men','old spice','indē wild','kérastase','tikitoro','bontress','himalaya','novology','proskire','intimify','cetaphil','wishcare','biotique','naturali','tom bull','bioderma','brillare','rebuilds','tresemmé','thriveco','cureskin','antinorm','lilyaura','fixderma','keragris','vaseline','carmesi','garnier','insight','ethiglo','regaliz','samisha','stactiv','sebamed','clayco.','set wet','episoft','cinthol','emolene','orgatre','pantene','pilgrim','foxtale','ahaglow','recapro','mediker','shlazio','yardley','medimix','brinton','neycare','elovera','bio-oil','sunsilk','ayuzera','aveeno','cos-iq','sammmm','phitku','bblunt','simple','engage',"pond's",'caboki','streax','rexona','sevich','nexxus','selsun','cerave','becalm','dettol','ustraa','denver','beardo','ducray','flicka','luvlap','toppik',"d'acne",'kokila','drveda','pureus','hyphen','salve','rayon','arata','gabit','renee','prowl','nivea','oziva','lakmé','livon','cipla','sanfe','neude','vivel','pears','traya','asaya','dabur','fiama','moha:','&done','qsera','vedix','liril','nike','olay','plum','sayy','dexe','fogg','dove','sesa','moiz','mars','tuco','ipca','lux','joy','axe'];
+const COMP_BRANDS=["dr. bakshi's bakson's homoeopathy","l'oréal professionnel paris",'love beauty and planet','beauty and planet','personal touch skincare','tnw - the natural wash','bombay shaving company','plix - the plant fix','get nectar happiness','proven honest derma','botanical luxuriate','kerrato hair fibres','biogreen healthcare','godrej professional','streax professional','bajaj almond drops','plix the plant fix','parachute advansed','raaga professional','the plant fix plix','head and shoulders','fair and handsome','fair & handsome','glow and lovely','clean and clear','bella vita luxury','molecular company','tugain essentials','conscious chemist','caveman naturals','head & shoulders','the pink foundry',"d'alba piedmont",'the man company','eclipse solaire','carbamide forte','sv professional','wild stone code','herbal essences','nuskhe by paras','vatika naturals',"herbs 'n' hopes",'touche wellness','lacto calamine','the skin story','organix mantra','yardley london','nourish mantra','skinn by titan','ashba botanics','mystiq living','mysore sandal','clean & clear',"l'oreal paris",'glow & lovely','jovees herbal','dermis oracle','khadi natural','the face shop','avimee herbal','alps goodness','follihair new','the body shop','hilary rhoda','swiss beauty','vilvah store','skininspired','farming drop','indus valley','bioguardiome','the derma co','reginald men','the bare bar','moxie beauty','natural wash','pink foundry','man company','body wise','face shop','body shop','skin story','man matters','clinic plus','miss lirenn','be bodywise','park avenue','deconstruct','bio mystery','aroma magic','photostable','plant fix','bare bar','thrive co',"dr. sheth's","sheth's",'thick fiber','baidyanath','neutrogena','enchanteur','ghar soaps','wild stone','rustic art',"dr batra's",'mintop pro','fatchemist','urbangabru','sparkxlife','maybelline','scalpe pro','aqualogica','soulflower','minimalist','dermatouch','chicnutrix','derma co','bodywise','mamaearth','bold care','swandeals','magnemite','palmolive','b natural','stylemake','la shield','indulekha','mcaffeine','muuchstac','thecurlco','kesh king','bellavita',"re' equil",'reequil','requil','acne - uv','cuticapil','parachute','nat habit','dot & key','dot and key','nivea men','old spice','indē wild','kérastase','tikitoro','bontress','himalaya','novology','proskire','intimify','cetaphil','wishcare','biotique','naturali','tom bull','bioderma','brillare','rebuilds','tresemmé','thriveco','thrive','cureskin','antinorm','lilyaura','fixderma','keragris','vaseline','carmesi','garnier','insight','ethiglo','regaliz','samisha','stactiv','sebamed','clayco.','set wet','episoft','cinthol','emolene','orgatre','pantene','pilgrim','foxtale','ahaglow','recapro','mediker','shlazio','yardley','medimix','brinton','neycare','elovera','bio-oil','sunsilk','ayuzera','loreal',"l'oreal",'aveeno','cos-iq','sammmm','phitku','bblunt','simple','engage',"pond's",'caboki','streax','rexona','sevich','nexxus','selsun','cerave','becalm','dettol','ustraa','denver','beardo','ducray','flicka','luvlap','toppik',"d'acne",'kokila','drveda','pureus','hyphen','salve','rayon','arata','gabit','renee','prowl','nivea','oziva','lakmé','livon','cipla','sanfe','neude','vivel','pears','traya','asaya','dabur','fiama','moha:','&done','qsera','vedix','liril','plix','nike','olay','plum','sayy','dexe','fogg','dove','sesa','moiz','mars','tuco','ipca','wow','lux','joy','axe'];
 const MY_ASINS=new Set('B0BJZXKH12,B0F5BLYYCN,B0CT5FKBR7,B0DK6W7RPS,B0DP5118T6,B0C31QR25M,B0BJ32VKB2,B0FYF1WKPT,B09TPT3S5C,B0F2N49ND4,B0BG536PSG,B09P8FYJJL,B0FFHDQVK1,B0DQTWS3NT,B0BQGG2GLT,B0BPC4D755,B09TQZY1KY,B09WVC165B,B0BYP961QR,B0FFHGXKW4,B0DS2WB4X9,B0BYP7R3TD,B0BYSPLWND,B0F88P5DX7,B0BYP8SJZK,B0DNN6V4H2,B0B4BY5WPC,B0D2XYWYVN,B09S9V1DVY,B09SB23VT2,B09PD61JYX,B09TLCP1NX,B0B4BW9BRF,B0D112N5GW,B0BN7YD7T2,B0DNKD3NX3,B0FFMQ8B3H,B09TQWYB8Z,B0B5F5ZPZ1,B0B31TXDJ3,B0CVTTXLLX,B09TR2FZS2,B0DSC5VX7Q,B0BYP9D3FK,B0CVTMFGJC,B0CVTP3DHS,B0B31TVWC7,B0B4BY6S36,B0F7HPHK3J,B09TLB7HDV,B0DQXZRM6K,B09WVDJBJF,B0F62VX164,B0FJ62RTQB,B0CHMCNCYQ,B0FJ61WCHV,B0CLRKDWGL,B0BGQ9DMKM,B0CB1NTBJC,B0B4CGP9LS,B0CWNV8C71,B0BK167GYP,B0CXCW2H72,B0CWNVD8M6,B0BLRMM27Z,B0BK115MYF,B0CRBB42JF,B0B6WCHZRS,B0BD5496VH,B0BJ4SPH3K,B09VPM5RP4,B09YRC6FBC,B0DTQCNW8C,B0FFT8XK3B,B0BRYMPKYR,B0FFT9J28G,B09SP8155G,B0BVMT2JLV,B0DFCSKL8K,B0CQ298XJM,B0CCDTLV49,B0D9B92YDL,B0CCLHR9TT,B0FS7RTWKM,B0C6KTQXP5,B0F8NX5QPM,B0CQ295WZ3,B0F48NHTVT,B0CCDR6Q7K,B0CH3N2VRF,B0F48QQMCJ,B09Q8Z3RG6,B09YR8FLQY,B0CMZT9H3N,B0C8HZCD6G,B0CH9PMZFN,B0CFY3CN27,B0FBS5629R,B0F9YHDXF5,B0BCZ3Q3V1,B0DZW7HXZ5,B0CCDR8GJR,B0C3LRGV25,B09MQYF894,B0CJFVDG5G,B0CHZ1XMP3,B0C3LSNRYQ,B0DHL42VFQ,B0DHL69KXW,B0C8NRMWXZ,B0BCZ9X7N2,B0BD5MVNJ4,B0C6KWCLPY,B0CJCC6CHV,B0BS9318R8,B0D2RMF65Q,B0B31LB7F5,B0CLJB1W8N,B0CFFS3LPZ,B0BGZQ9Q4R,B0CFFSFC6Y,B0FMFQ7LSM,B0CLRJBZ7Z,B0DWP4YSZP,B0CJCG9Y7H,B0B4BKR1RT,B0CJCG4WYH,B0C6KYDBL1,B0D2RNPD1Q,B0DRVVTBRP,B0C3LRCKYP,B0CM3W97JP,B0CM3XHBC2,B0CHZ2D8JF,B0DQ5KR96G,B0C3ZNKYSP,B0CSDLJGYR,B0CM3WBGTS,B0CSDKK8X2,B0DQ5JZP9X,B0DVHN31LW,B0CFV589N5,B0981BJP52,B0CBSTYQV9,B0DQ57R2CD,B0DQ5FZ9WN,B0C17LWXVP,B0DYV56LD9,B0DYTSB3VJ,B0DKPC6M7S,B0B4JPLN2H,B0CQCTTS6K,B0CQCT2Q6B,B0CSD1NTVJ,B0C17N733N,B0D4MDC88K,B09ZKVD3XY,B0CVTWMG9F,B0CQCTY8G8,B0D4MF4497,B0DZHP25P5,B0FGQLFGCM,B0F5B11VS1,B0F2MVH19L,B0DVR99VRY,B0G2MMQBMK,B0BRHK5NGY,B0FBS1Q97Z,B0FTSBJGMK,B0FQHVX4LT,B0G2MH2QB6,B0G2MLKS18,B0CH8PYFTX,B0F3TR1VZ4'.split(','));
 const ASIN_MAP={"B0F5BLYYCN":{"n":"Bare Anatomy Anti Dandruff Shampoo 100ml","b":"BA","c":"Shampoo","r":"Dandruff","cl":"Hi Growth","s":"Anti Dandruff Shampoo 100 ml","st":"Active"},"B0DK6W7RPS":{"n":"Bare Anatomy Nature x Science Rosemary Water Spray 200 ml","b":"BA","c":"Hair Spray","r":"Rosemary","cl":"Hero","s":"Rosemary Water Spray 200 ml","st":"Active"},"B0BJZXKH12":{"n":"Bare Anatomy Anti Dandruff Shampoo 250ml","b":"BA","c":"Shampoo","r":"Dandruff","cl":"Hero","s":"Anti Dandruff Shampoo 250 ml","st":"Active"},"B09VPM5RP4":{"n":"Chemist At Play 1% Salicylic Acid Exfoliating Body Wash 236m","b":"CAP","c":"Body Wash","r":"Exfoliating","cl":"Hero","s":"Exfoliating BW 236 ml","st":"Active"},"B09YRC6FBC":{"n":"Chemist at Play UnderArm Roll On Aqua Fragrance 40 ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll on: Aqua 40 ml","st":"Active"},"B0BJ32VKB2":{"n":"Bare Anatomy Anti Hair Fall Shampoo 250ml","b":"BA","c":"Shampoo","r":"Hairfall","cl":"Hi Growth","s":"Anti Hair Fall Shampoo 250 ml","st":"Active"},"B0DP5118T6":{"n":"Bare Anatomy Anti Hair Fall Shampoo 100ml","b":"BA","c":"Shampoo","r":"Hairfall","cl":"Hi Growth","s":"Anti Hair Fall Shampoo 100 ml","st":"Active"},"B0CCDTLV49":{"n":"Chemist at Play 2% Salicylic Acid Face Wash 100 ml","b":"CAP","c":"Face Wash","r":"Acne","cl":"Hi Growth","s":"Oil Control FW (Tube) 100 ml","st":"Active"},"B0CT5FKBR7":{"n":"Bare Anatomy Advanced Hair Growth Serum 30ml","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Hero","s":"Hair Growth Serum 30 ml","st":"Active"},"B0FS7RTWKM":{"n":"Chemist At Play Gentle Exfoliating Face Wash 100ml","b":"CAP","c":"Face Wash","r":"Exfoliating","cl":"Others","s":"Exfoliating FW -100ml","st":"Active"},"B0D9B92YDL":{"n":"Chemist At Play Gentle Exfoliating Face Scrub 100ml","b":"CAP","c":"Face Scrub","r":"Exfoliating","cl":"Hi Growth","s":"Face Scrub 100 ml","st":"Active"},"B0FFT9J28G":{"n":"Chemist At Play's Cherry Lip Balm 4.5gm","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Single","s":"Cherry Lip Balm 4.5 gm","st":"Active"},"B0FFT8XK3B":{"n":"Chemist At Play's Natural Lip Balm 4.5gm","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Single","s":"Natural Lip Balm 4.5 gm","st":"Active"},"B0C31QR25M":{"n":"Bare Anatomy Junior Gentle Cleansing Shampoo For Kids 250 mL","b":"BA","c":"Shampoo","r":"Kids","cl":"Others","s":"Kids Shampoo 250 ml","st":"Active"},"B0DYV56LD9":{"n":"SunScoop 5% Niacinamide Daily Moisture Sunscreen Body Lotion","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Hi Growth","s":"5% Niacinamide Sunscreen 200 g","st":"Active"},"B0FTSBJGMK":{"n":"Bare Anatomy Advanced Hair Growth Serum Roll-On 25ml","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Others","s":"Hair Growth Serum Roll-On (25ml)","st":"Active"},"B0FFMP6F71":{"n":"Bare Anatomy Anti-Dandruff Shampoo & Conditioner Combo 250ml","b":"BA","c":"Combo","r":"Dandruff","cl":"Combo","s":"Anti Dandruff Shampoo + Conditioner","st":"Active"},"B0CQ298XJM":{"n":"Chemist at Play Brightening Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Brightening","cl":"Hi Growth","s":"Brightening BW 236 ml","st":"Active"},"B0BVMT2JLV":{"n":"Chemist at Play Brightening & Whitening Roll On Serum For Ne","b":"CAP","c":"Neck Roll On","r":"Roll on","cl":"Hero","s":"Neck Knee Roll on 40 ml","st":"Active"},"B09SP8155G":{"n":"Chemist At Play 1% Salicylic Acid Exfoliating Body Wash 473m","b":"CAP","c":"Body Wash","r":"Exfoliating","cl":"Hero","s":"Exfoliating BW 473 ml","st":"Active"},"B09YR8FLQY":{"n":"Chemist at Play UnderArm Roll On Fragrance Free 40 ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll on: Fragrance Free 40 ml","st":"Active"},"B0DTQCNW8C":{"n":"Chemist at Play UnderArm Roll-On Aqua Fragrance | Alcohol Fr","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll on: Aqua 75 ml","st":"Active"},"B0C17LWXVP":{"n":"SunScoop Hydrating Face & Body Fluid Sunscreen Spray 125ml","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Hi Growth","s":"Hydrating Fluid Sunscreen 125 ml","st":"Active"},"B0DRVVTBRP":{"n":"Chemist At Play 10% Vitamin C Face Serum 10ml","b":"CAP","c":"Face serum","r":"Brightening","cl":"Hi Growth","s":"Brightening Face Serum 10 ml","st":"Active"},"B0C6KTQXP5":{"n":"Chemist at Play UnderArm Roll-On Deodorant White Jasmine Fra","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll On White Jasmine (Round)","st":"Active"},"B0DFCSKL8K":{"n":"Chemist At Play 10% Vitamin C Face Serum 30ml","b":"CAP","c":"Face serum","r":"Brightening","cl":"Hi Growth","s":"Brightening Face Serum 30 ml","st":"Active"},"B0BRYMPKYR":{"n":"Chemist At Play 5% Natural AHA Body Lotion 236ml","b":"CAP","c":"Body Lotion","r":"AHA","cl":"Hi Growth","s":"AHA Body Lotion 236 ml","st":"Active"},"B0DYTSB3VJ":{"n":"Sunscoop's 3% Niacinamide Fluid Sunscreen| SPF 50+ PA++++ | ","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Hi Growth","s":"3% Niacinamide Fluid Sunscreen 45 g","st":"Active"},"B0FFHGXKW4":{"n":"Bare Anatomy Anti-Dandruff Hair Conditioner 175gm","b":"BA","c":"Conditioner","r":"Dandruff","cl":"New","s":"Anti Dandruff Conditioner 175 g","st":"Active"},"B0F9YK8WLV":{"n":"Bare Anatomy Advanced Hair Growth Serum 20ml","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Hero","s":"Hair Growth Serum 20 ml","st":"Phased Out"},"B0F2N49ND4":{"n":"Bare Anatomy Advanced Anti-Grey Serum 50m","b":"BA","c":"Hair serum","r":"Anti Grey","cl":"Others","s":"Anti Grey Serum 50 ml","st":"Active"},"B09TQZY1KY":{"n":"Bare Anatomy EXPERT Ultra Smoothing Hair Mask 250 gm","b":"BA","c":"Hair Mask","r":"Ultra Smoothing","cl":"Hi Growth","s":"Ultra Smoothing Mask 250 g","st":"Active"},"B0DNN6V4H2":{"n":"Bare Anatomy Expert Anti-Dandruff Shampoo 750ml","b":"BA","c":"Shampoo","r":"Dandruff","cl":"Hero","s":"Anti Dandruff Shampoo 750 ml","st":"Active"},"B0FFMQ8B3H":{"n":"Bare Anatomy Anti-Hair Fall Shampoo & Conditioner Combo 250m","b":"BA","c":"Combo","r":"Hairfall","cl":"New","s":"Anti Hair Fall Shampoo + Conditioner","st":"Active"},"B0D2XYWYVN":{"n":"Bare Anatomy Nature x Science Rosemary Hibiscus Hair Growth ","b":"BA","c":"Hair Oil","r":"Rosemary","cl":"Hi Growth","s":"Rosemary Hair Oil 100 ml","st":"Active"},"B09P8FYJJL":{"n":"Bare Anatomy Ultra Smoothing Hair Serum 100ml","b":"BA","c":"Hair Serum","r":"Ultra Smoothing","cl":"Mod Growth","s":"Ultra Smoothing Serum 50 ml","st":"Active"},"B0CCDR6Q7K":{"n":"Chemist at Play Brightening Boost Face Wash 100 ml","b":"CAP","c":"Face Wash","r":"Brightening","cl":"Others","s":"Brightening FW (Tube) 100 ml","st":"Active"},"B0FFHDQVK1":{"n":"Bare Anatomy Anti-Hair Fall Conditioner 175gm","b":"BA","c":"Conditioner","r":"Hairfall","cl":"New","s":"Anti Hair Fall Conditioner 175 g","st":"Active"},"B0BDS757BX":{"n":"Chemist at Play Under Arm Roll On Peach Fragrance | 40ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll on: Peach 40 ml","st":"Active"},"B0FGQLFGCM":{"n":"Bare Anatomy Nature x Science Rosemary Water Spray 200 ml (P","b":"BA","c":"Hair Spray","r":"Rosemary","cl":"Others","s":"Rosemary Water Spray (Pack of 2)","st":"Active"},"B0C6KWCLPY":{"n":"Chemist at Play UnderArm Roll-On Woody Musk Fragrance 40ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll On Woody Mask (Round)","st":"Active"},"B09TPT3S5C":{"n":"Bare Anatomy Ultra Smoothing Shampoo for Dry and Frizzy Hair","b":"BA","c":"Shampoo","r":"Ultra Smoothing","cl":"Hi Growth","s":"Ultra Smoothing Shampoo 250 ml","st":"Active"},"B0FMZW8PGK":{"n":"Bare Anatomy Ultra Smoothing Shampoo 100ml","b":"BA","c":"Shampoo","r":"Ultra Smoothing","cl":"Shampoo","s":"Ultra Smoothing Shampoo 100 ml","st":"Active"},"B0CCLHR9TT":{"n":"Chemist At Play Under Eye Cream 15 g","b":"CAP","c":"Eye Cream","r":"Under eye","cl":"Others","s":"Under Eye Cream 15 g","st":"Active"},"B0G2MH2QB6":{"n":"Bare Anatomy Instant Cover-Up Hair Powder | Black Color | 4g","b":"BA","c":"Cover up","r":"Hair powder","cl":"Others","s":"Cover-Up Hair Powder(Black) 4 g","st":"Active"},"B0BG536PSG":{"n":"Bare Anatomy Anti Frizz Leave In Conditioner 150ml","b":"BA","c":"Leave in conditioner","r":"Anti Frizz","cl":"Others","s":"Anti Frizz Leave In Conditioner 150 ml","st":"Active"},"B0FBS1Q97Z":{"n":"Chemist At Play Bright Boost SPF Body Lotion | 236ml","b":"CAP","c":"Body lotion","r":"Brightening","cl":"Hi Growth","s":"Brightening Body Lotion 236 ml","st":"Active"},"B0BQGG2GLT":{"n":"Bare Anatomy Heat Protection Spray 150 ml","b":"BA","c":"Style Spray","r":"Accessories","cl":"Others","s":"Heat Protection Spray 150 ml","st":"Active"},"B0G2MJN8B8":{"n":"Chemist At Play 0.1% Retinol Night Cream | 30gm","b":"CAP","c":"Night Cream","r":"Night Cream","cl":"Others","s":"0.1% Retinol Night Cream - 30g","st":"Active"},"B0F88P5DX7":{"n":"Bare Anatomy Oil Control Shampoo 236ml","b":"BA","c":"Shampoo","r":"Oil Control","cl":"Others","s":"Oil Control Shampoo 236 ml","st":"Active"},"B0C6KYDBL1":{"n":"Chemist at Play UnderArm Roll-On Deodorant Royal Oudh Fragra","b":"CAP","c":"Roll on","r":"Roll on","cl":"Hero","s":"Roll On Royal Oudh (Round)","st":"Active"},"B0BYP961QR":{"n":"Bare Anatomy Curl Intensifying Leave-In Conditioner 140 ml","b":"BA","c":"Leave in conditioner","r":"Curl","cl":"Others","s":"Curl Leave in Conditioner 140 ml","st":"Active"},"B0CQ295WZ3":{"n":"Chemist at Play Hydrating Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Hydrating","cl":"Others","s":"Hydrating BW 236 ml","st":"Active"},"B0C8HZCD6G":{"n":"Chemist at Play Exfoliating Body Scrub 75g","b":"CAP","c":"Body Scrub","r":"Exfoliating","cl":"Hi Growth","s":"Body Scrub 75 g","st":"Active"},"B0FYF1WKPT":{"n":"Bare Anatomy Nature x Science Dandruff Control Scalp Spray 2","b":"BA","c":"Scalp Spray","r":"Dandruff","cl":"Others","s":"Dandruff Control Scalp Spray 200 ml","st":"Active"},"B0BCZ3Q3V1":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Loofah","b":"CAP","c":"Body Wash","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Loofah","st":"Active"},"B09WVC165B":{"n":"Bare Anatomy Volumizing Hair Shampoo 250 ml","b":"BA","c":"Shampoo","r":"Volumizing","cl":"Others","s":"Volumizing Shampoo 250 ml","st":"Active"},"B0CMZT9H3N":{"n":"Chemist at Play Foot Cream 50g","b":"CAP","c":"Foot Cream","r":"Foot cream","cl":"Others","s":"Foot Cream 50 g","st":"Active"},"B0CH3N2VRF":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Under-Arm Roll","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Roll on: Aqua","st":"Active"},"B0F48NHTVT":{"n":"Chemist At Play Odour Control Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Odour Control","cl":"Hi Growth","s":"Odour Control BW 236 ml","st":"Active"},"B0B31LB7F5":{"n":"Chemist at Play Under-Arm Roll-On Aqua Fragrance 40ml (Pack ","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Aqua (Pack Of 2)","st":"Active"},"B0B4BW9BRF":{"n":"Bare Anatomy Ultra Smoothing Shampoo + Hair Mask Kit 250ml +","b":"BA","c":"Combo","r":"Ultra Smoothing","cl":"Others","s":"Ultra Smoothing Shampoo + Mask(250 ml)","st":"Active"},"B0G1BXRS4V":{"n":"Chemist At Play AHA Body Lotion 236ml + Exfoliating Body Was","b":"CAP","c":"Combo","r":"AHA+Exfoliating","cl":"Others","s":"AHA BL 236 ml + Exfoliating BW 236 ml","st":"Active"},"B0G2MMQBMK":{"n":"Bare Anatomy Advanced Anti Dandruff Serum | 50ml","b":"BA","c":"Hair Serum","r":"Dandruff","cl":"Others","s":"Anti Dandruff serum","st":"Active"},"B0F4RHK6PK":{"n":"Bare Anatomy Anti-Dandruff Shampoo (250 ml) + Rosemary Water","b":"BA","c":"Combo","r":"Combo","cl":"Others","s":"Anti Dandruff Shampoo + Rosemary Water Spray","st":"Active"},"B09Q8Z3RG6":{"n":"Chemist at Play 1% Salicylic Acid Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Acne","cl":"Others","s":"Acne BW 236 ml","st":"Active"},"B0C8NRMWXZ":{"n":"Chemist At Play Exfoliating Body Wash 236ml (Pack of 3)","b":"CAP","c":"Body Wash","r":"Exfoliating","cl":"Others","s":"Exfoliating BW 236 ml (Pack Of 3)","st":"Active"},"B0BYP7R3TD":{"n":"Bare Anatomy Curl Defining Shampoo 250 ml","b":"BA","c":"Shampoo","r":"Curl","cl":"Mod Growth","s":"Curl Shampoo 250 ml","st":"Active"},"B0BN7YD7T2":{"n":"Bare Anatomy Hair Fall Shampoo 250ml (Pack of 2)","b":"BA","c":"Shampoo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo (Pack Of 2)","st":"Active"},"B0F62VX164":{"n":"Bare Anatomy Rosemary Water Spray 200ml & Rosemary Hibiscus ","b":"BA","c":"Combo","r":"Rosemary","cl":"Others","s":"Rosemary Water Spray + Hair Oil","st":"Active"},"B0F8NX5QPM":{"n":"Chemist at Play Brightening Body Wash 473ml","b":"CAP","c":"Body Wash","r":"Brightening","cl":"Others","s":"Brightening BW 473ml","st":"Active"},"B0CYPM4GKL":{"n":"Bare Anatomy Nature x Science Rosemary & Coconut Milk Hydrat","b":"BA","c":"Conditioner","r":"Rosemary","cl":"Others","s":"Rosemary Conditioner 150 ml","st":"Phased Out"},"B09SB23VT2":{"n":"Bare Anatomy Damage Repair Hair Mask 250g","b":"BA","c":"Hair Mask","r":"Damage Repair","cl":"Others","s":"Damage Repair Mask 250 g","st":"Active"},"B0CLRKDWGL":{"n":"Bare Anatomy Anti Dandruff Shampoo 250ml (Pack of 2)","b":"BA","c":"Shampoo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo (Pack Of 2)","st":"Active"},"B0DZW7HXZ5":{"n":"Chemist at Play Intensely Hydrating Gel Sunscreen 45gm","b":"CAP","c":"Sunscreen","r":"Hydrating","cl":"Hi Growth","s":"Hydrating Gel Sunscreen 45 g","st":"Active"},"B0F48QQMCJ":{"n":"Chemist At Play Deep Cleansing Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Deep Cleansing","cl":"Hi Growth","s":"Deep Cleansing BW 236 ml","st":"Active"},"B0DNKD3NX3":{"n":"Bare Anatomy Advanced Hair Growth Serum 30ml (Pack of 2)","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Others","s":"Hair Growth Serum (Pack of 2)","st":"Active"},"B0BPC4D755":{"n":"Bare Anatomy Scalp Scrub 250g","b":"BA","c":"Scalp scrub","r":"Scalp Scrub","cl":"Others","s":"Scalp Scrub 250 g","st":"Active"},"B0FTSDYL68":{"n":"Bare Anatomy Root Lift & Volume Spray 135ml","b":"BA","c":"Hair Spray","r":"Volumizing","cl":"Others","s":"Root Lift & Volume Spray 135 ml","st":"Active"},"B09TLB7HDV":{"n":"Bare Anatomy Damage Repair Hair Shampoo 250ml","b":"BA","c":"Shampoo","r":"Damage Repair","cl":"Others","s":"Damage Repair Shampoo 250 ml","st":"Active"},"B09PD61JYX":{"n":"Bare Anatomy Damage Repair Hair Serum 100ml","b":"BA","c":"Hair Serum","r":"Damage Repair","cl":"Others","s":"Damage Repair Serum 100 ml","st":"Active"},"B0FBS5629R":{"n":"Chemist At Play's Intensely Hydrating Face Moisturizer 100gm","b":"CAP","c":"Moisturizer","r":"Hydrating","cl":"Hi Growth","s":"Hydrating Moisturizer 100 g","st":"Active"},"B0FQHV6RQL":{"n":"Chemist at Play Brightening Boost Face Wash (100ml) + 10% Vi","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening Boost Face Wash (100ml) + 10% Vitamin C Face Serum (10ml)","st":"Active"},"B0G4N1N5MZ":{"n":"Chemist At Play's Tri-Active Underarm Roll On | 40ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Tri-Active Underarm Roll On","st":"Active"},"B0F5KQH5BL":{"n":"Bare Anatomy Anti-Dandruff Shampoo 250ml + Bare Anatomy Adva","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + HGS","st":"Active"},"B09S9V1DVY":{"n":"Bare Anatomy Anti Frizz Hair Mask 250g","b":"BA","c":"Hair Mask","r":"Anti Frizz","cl":"Others","s":"Anti Frizz Mask 250 g","st":"Active"},"B0DQTWS3NT":{"n":"Bare Anatomy Ultra Smoothing Shampoo 750ml","b":"BA","c":"Shampoo","r":"Ultra Smoothing","cl":"Mod Growth","s":"Ultra Smoothing Shampoo 750 ml","st":"Active"},"B0BYP8SJZK":{"n":"Bare Anatomy Curl Defining Gel 140 ml","b":"BA","c":"Gel","r":"Curl","cl":"Others","s":"Curl Gel 140 ml","st":"Active"},"B0FQHZMQDR":{"n":"Chemist at Play SPF Body Lotion (236ml) + Brightening Body W","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening Body Lotion (236ml) + Brightening Body Wash (236ml)","st":"Active"},"B0C3LSNRYQ":{"n":"Chemist at Play Neck Knee Roll On 40ml + Under-Arm Roll-On A","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Neck Knee Roll on + Roll on: Aqua","st":"Active"},"B0CH9PMZFN":{"n":"Chemist at Play Anti-Aging Body Lotion 200ml","b":"CAP","c":"Body Lotion","r":"Retinol","cl":"Mod Growth","s":"Retinol Body Lotion (Tube) 200 ml","st":"Active"},"B09MQYF894":{"n":"Chemist at Play 1% Salicylic Acid Body Wash 473ml","b":"CAP","c":"Body Wash","r":"Acne","cl":"Mod Growth","s":"Acne BW 473 ml","st":"Active"},"B0CCDR8GJR":{"n":"Chemist at Play Gentle & Hydrating Face Cleanser 100 ml","b":"CAP","c":"Face Wash","r":"Hydrating","cl":"Others","s":"Hydrating FW (Tube) 100 ml","st":"Active"},"B0CJFVDG5G":{"n":"Chemist at Play Exfoliating Body Scrub 75g + Exfoliating Bod","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Body Scrub + Exfoliating BW","st":"Active"},"B0DKPC6M7S":{"n":"SunScoop Kids 100% Mineral Sunscreen Lotion 75 gm","b":"SS","c":"Sunscreen","r":"Kids","cl":"Others","s":"Kids Mineral Sunscreen 75 g","st":"Active"},"B09TQWYB8Z":{"n":"Bare Anatomy Color Protect Shampoo 250 ml","b":"BA","c":"Shampoo","r":"Color","cl":"Mod Growth","s":"Color Shampoo 250 ml","st":"Active"},"B0BYP9D3FK":{"n":"Bare Anatomy Curl Enhancing Hair Mask 250g","b":"BA","c":"Hair Mask","r":"Curl","cl":"Others","s":"Curl Hair Mask 250 g","st":"Active"},"B0CH8PYFTX":{"n":"Bare Anatomy Junior Gentle Cleansing Shampoo For Kids 250 ml","b":"BA","c":"Shampoo","r":"Kids","cl":"Others","s":"Kids Shampoo (Pack Of 2)","st":"Active"},"B0FPBHLY3Q":{"n":"Bare Anatomy Advanced Anti-Grey Serum 50ml (Pack of 2)","b":"BA","c":"Hair Serum","r":"Anti Grey","cl":"Others","s":"Anti Grey Serum 50ml (Pack of 2)","st":"Active"},"B0G2MLKS18":{"n":"Bare Anatomy Instant Cover-Up Hair Powder | Brown Color | 4g","b":"BA","c":"Cover up","r":"Hair powder","cl":"Others","s":"Cover-Up Hair Powder(Brown) 4 g","st":"Active"},"B0FJ8XBFDP":{"n":"Bare Anatomy Anti Hair Fall Shampoo 250ml + Rosemary Water S","b":"BA","c":"Combo","r":"Hairfall","cl":"Combo","s":"Anti Hair Fall Shampoo 250ml + RWS 200 ml","st":"Active"},"B0BYSPLWND":{"n":"Bare Anatomy Curl Defining Shampoo + Hair Mask + Leave-In Co","b":"BA","c":"Combo","r":"Curl","cl":"Others","s":"Curl Shampoo + Leave In Conditioner + Mask + Gel","st":"Active"},"B0F5B11VS1":{"n":"Bare Anatomy 100% Pure & Natural Rosemary Essential Oil 15ml","b":"BA","c":"Hair Oil","r":"Rosemary","cl":"Hi Growth","s":"Rosemary Essential Oil 15 ml","st":"Active"},"B0GLNVMFV3":{"n":"Chemist At Play UnderArm Roll-On Fragrance-Free| Alcohol Fre","b":"CAP","c":"Roll on","r":"Roll on","cl":"New Launch","s":"Roll on: Fragrance Free 75 ml","st":"Active"},"B0BD5MVNJ4":{"n":"Chemist at Play Under-Arm Roll-On With Fragrance Free 40ml (","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Fragrance Free (Pack Of 2)","st":"Active"},"B0DS2WB4X9":{"n":"Bare Anatomy Advanced Hair Growth Serum 30ml (Pack of 3)","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Others","s":"Hair Growth Serum (Pack of 3)","st":"Active"},"B0FJFK5N3W":{"n":"Bare Anatomy Anti Hair Fall Shampoo 250ml + Anti-Hair Fall C","b":"BA","c":"Combo","r":"Hairfall","cl":"Combo","s":"Anti Hair Fall Shampoo + HGS + Conditioner","st":"Active"},"B09TLCP1NX":{"n":"Bare Anatomy Anti Frizz Shampoo 250ml","b":"BA","c":"Shampoo","r":"Anti Frizz","cl":"Others","s":"Anti Frizz Shampoo 250 ml","st":"Active"},"B0FYPRV5SY":{"n":"Chemist At Play AHA Body Lotion 473ml","b":"CAP","c":"Body lotion","r":"AHA","cl":"Others","s":"AHA Body Lotion 473ml","st":"Active"},"B0CFFSFC6Y":{"n":"Chemist at Play Under-Arm Roll-On Woody Musk Fragrance | 40m","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Woody Musk (Pack Of 2)","st":"Active"},"B0CQCTTS6K":{"n":"SunScoop Hydrating Face & Body Fluid Sunscreen Spray 125ml(P","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Hydrating Fluid Sunscreen (Pack Of 2)","st":"Active"},"B0CFFPKQ1L":{"n":"Chemist at Play UnderArm Roll-On Royal Oudh Fragrance | 40ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Royal Oudh (Pack Of 2)","st":"Active"},"B0DSC5VX7Q":{"n":"Bare Anatomy Expert Sleek Hair Finishing Stick 10ml","b":"BA","c":"Hair Stick","r":"Accessories","cl":"Others","s":"Sleek Stick 10 ml","st":"Active"},"B0B5F5ZPZ1":{"n":"Bare Anatomy EXPERT Volumizing Hair Shampoo 250ml + Hair Mas","b":"BA","c":"Combo","r":"Volumizing","cl":"Others","s":"Volumizing Shampoo + Mask","st":"Active"},"B0B4BY5WPC":{"n":"Bare Anatomy Ultra Smoothing Shampoo + Hair Mask + Hair Seru","b":"BA","c":"Combo","r":"Ultra Smoothing","cl":"Others","s":"Ultra Smoothing Shampoo + Mask + Serum","st":"Active"},"B0FQJ1N2P4":{"n":"Chemist at Play Exfoliating Body Wash (236ml) + Brightening ","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating Body Wash (236ml) + Brightening Body Wash (236ml)","st":"Active"},"B0CVTTXLLX":{"n":"Bare Anatomy Curl Defining Shampoo 250ml + Curl Leave In Con","b":"BA","c":"Combo","r":"Curl","cl":"Others","s":"Curl Shampoo + Leave In Conditioner","st":"Active"},"B0BXDVRK78":{"n":"Chemist at Play UnderArm Roll-On Peach Fragrance 40ml (Pack ","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Peach (Pack Of 2)","st":"Active"},"B0F1V666PC":{"n":"Chemist At Play 2% Salicylic Acid Face Serum 10ml","b":"CAP","c":"Face serum","r":"Acne","cl":"Hi Growth","s":"Acne Face Serum 10 ml","st":"Active"},"B0F5BKVCH4":{"n":"Bare Anatomy Gentle Cleansing Kids Shampoo 750ml","b":"BA","c":"Shampoo","r":"Kids","cl":"Others","s":"Kids Shampoo 750 ml","st":"Active"},"B0G71BY9HG":{"n":"Chemist At Play UnderArm Roll-On Aqua 40ml + Royal Oudh Frag","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Roll on: Aqua + Royal Oudh 40 ml","st":"Active"},"B0B31TXDJ3":{"n":"Bare Anatomy Anti Frizz Shampoo 250ml+ Hair Mask Kit 250g","b":"BA","c":"Combo","r":"Anti Frizz","cl":"Others","s":"Anti Frizz Shampoo + Mask","st":"Active"},"B0B4BKR1RT":{"n":"Chemist at Play Under-Arm Roll On Aqua Fragrance 40ml (Pack ","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Aqua (Pack Of 3)","st":"Active"},"B0G72337X7":{"n":"Chemist At Play Exfoliating Face Wash 100ml + Gentle Exfolia","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating FW 100 ml + BW 236 ml","st":"Active"},"B0FQHVC89C":{"n":"Chemist at Play Acne Control Face Wash (100ml) + Acne Face S","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne Control Face Wash (100ml) + Acne Face Serum (10ml)","st":"Active"},"B0DWNKL4X8":{"n":"Chemist at Play 30x Vitamin C Face Wash 100ml + Gentle Exfol","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Vitamin C Face Wash + Gentle Exfoliating Face Scrub (100ml each) Pack of 2","st":"Active"},"B0G2MKJV3K":{"n":"Chemist at Play 10% Magnesium Body Lotion| 236ml","b":"CAP","c":"Body lotion","r":"Magnesium","cl":"Others","s":"10% Magnesium Body Lotion(236 ml)","st":"Active"},"B0CLJB1W8N":{"n":"Chemist at Play UnderArm Roll-On White Jasmine Fragrance 40m","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: White Jasmine (Pack Of 2)","st":"Active"},"B0CFFS3LPZ":{"n":"Chemist at Play Neck Knee Roll On 40ml (Pack of 2)","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Neck Knee Roll on (Pack Of 2)","st":"Active"},"B0CHZ1XMP3":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Brightening Bo","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW 236 ml + Brightening FW","st":"Active"},"B0FJ62RTQB":{"n":"Bare Anatomy Rosemary Water Spray 200ml + Anti Hair Fall Sha","b":"BA","c":"Combo","r":"Rosemary","cl":"Combo","s":"Rosemary Water Spray 200 ml + Anti Hair Fall Shampoo 250 ml","st":"Active"},"B0CFY3CN27":{"n":"Chemist at Play Hydrating Body Lotion 200 ml","b":"CAP","c":"Body Lotion","r":"Hydrating","cl":"Others","s":"Hydrating Body Lotion (Tube) 200 ml","st":"Active"},"B0D112N5GW":{"n":"Bare Anatomy Anti Hair Fall Shampoo 250ml + Advanced Hair Gr","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo + HGS","st":"Active"},"B0B31TVWC7":{"n":"Bare Anatomy Color Protect Shampoo 250ml + Hair Mask 250g","b":"BA","c":"Combo","r":"Color","cl":"Others","s":"Color Protect Shampoo + Mask","st":"Active"},"B0DQXZRM6K":{"n":"Bare Anatomy Hair Scalp Massager Brush","b":"BA","c":"Scalp Massager","r":"Accessories","cl":"Others","s":"Scalp Massager","st":"Active"},"B0FMFQ7LSM":{"n":"Chemist at Play Gentle & Soothing Facewash 75ml","b":"CAP","c":"Face Wash","r":"Soothing","cl":"Others","s":"Gentle and Soothing FW 75 ml","st":"Active"},"B0DQ57R2CD":{"n":"Chemist At Play Peach Tinted Lip Balm 10gms","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Others","s":"Peach Lip Jelly 10 g","st":"Active"},"B0CBSTYQV9":{"n":"Chemist at Play 26% AHA 2% BHA 4% PHA Peeling Solution 30ml","b":"CAP","c":"Face Serum","r":"Peeling Solution","cl":"Others","s":"Peeling Solution 30 ml","st":"Active"},"B0F7HPHK3J":{"n":"Bare Anatomy Ultra-Smoothing Shampoo & Hair Mask Travel Pack","b":"BA","c":"Kit","r":"Ultra Smoothing","cl":"Others","s":"Travel Kit US","st":"Active"},"B0FJ61WCHV":{"n":"Bare Anatomy Rosemary Water Spray 200ml + Bare Anatomy Advan","b":"BA","c":"Combo","r":"Rosemary","cl":"Combo","s":"Rosemary Water Spray + HGS 30 ml","st":"Active"},"B0FQHVX4LT":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Rosemary Wate","b":"BA","c":"Combo","r":"Rosemary","cl":"Others","s":"Anti-Grey Serum (50ml) + Rosemary Water Spray","st":"Active"},"B0B4BY6S36":{"n":"Bare Anatomy Damage Repair Shampoo 250ml + Hair Mask 250g","b":"BA","c":"Combo","r":"Damage Repair","cl":"Others","s":"Damage Repair Shampoo + Mask","st":"Active"},"B09WVDJBJF":{"n":"Bare Anatomy Volumizing Hair Mask 250g","b":"BA","c":"Hair Mask","r":"Volumizing","cl":"Mod Growth","s":"Volumizing Mask 250 g","st":"Active"},"B0DSWTL6DN":{"n":"Chemist at Play Exfoliating Body Scrub 75g + Gentle Exfoliat","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Face Scrub + Body scrub","st":"Active"},"B0DQ5KR96G":{"n":"Chemist At Play Cherry Tinted Lip Balm 10gms","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Others","s":"Cherry Lip Jelly 10 g","st":"Active"},"B0DHL69KXW":{"n":"Vinci Botanicals Bergamot Geranium Hand Creme 30g","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Hand Creme 30 g","st":"Active"},"B0DXL9H99M":{"n":"Chemist At Play 2% Salicylic Acid Face Serum 30ml","b":"CAP","c":"Face serum","r":"Acne","cl":"Hi Growth","s":"Acne Face Serum 30 ml","st":"Active"},"B0D7M9KX3C":{"n":"Chemist At Play Glycolic Acid Face Toner 150ml","b":"CAP","c":"Face toner","r":"Exfoliating","cl":"Others","s":"Face Toner 150 ml","st":"Active"},"B0CVTP3DHS":{"n":"Bare Anatomy Curl Defining Shampoo 250ml + Curl Enhancing Ha","b":"BA","c":"Combo","r":"Curl","cl":"Others","s":"Curl Mask + Shampoo","st":"Active"},"B0FQHV3GRN":{"n":"Chemist At Play Cherry Lip Balm (4.5g) + Aqua Underarm Roll-","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Cherry Lip Balm (4.5g) + Aqua Underarm Roll-On (40ml)","st":"Active"},"B0GHNMS3R7":{"n":"Chemist At Play Oil Control Face Moisturizer 100gm","b":"CAP","c":"Face Moisturizer","r":"Face Moisturizer","cl":"New Launch","s":"Oil Control Face Moisturiser - 100gm","st":"Active"},"B0DQ5JZP9X":{"n":"Chemist At Play Chocolate Tinted Lip Balm 10gms","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Others","s":"Chocolate Lip Jelly 10 g","st":"Active"},"B0DWNKD5ZT":{"n":"Chemist at Play 2% Salicylic Acid Face Wash 100ml + Gentle E","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Salicylic Acid Face Wash + Gentle Exfoliating Face Scrub (100ml each) Pack of 2","st":"Active"},"B0BGZQ9Q4R":{"n":"Chemist at Play UnderArm Roll-On Peach 40ml + Aqua Fragrance","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Roll on: Peach + Aqua","st":"Active"},"B0DQ5FZ9WN":{"n":"Chemist At Play Vanilla Tinted Lip Balm 10gm","b":"CAP","c":"Lip Balm","r":"Lip Balm","cl":"Others","s":"Vanilla Lip Jelly 10 g","st":"Active"},"B0F2MVH19L":{"n":"Chemist at Play Gentle & Soothing Facewash 150ml","b":"CAP","c":"Face Wash","r":"Soothing","cl":"Hi Growth","s":"Gentle & Soothing FW 150 ml","st":"Active"},"B0FPBKVNN7":{"n":"Bare Anatomy Advanced Anti-Grey Serum 50ml (Pack of 3)","b":"BA","c":"Hair Serum","r":"Anti Grey","cl":"Others","s":"Anti Grey Serum 50ml (Pack of 3)","st":"Active"},"B0C3LRGV25":{"n":"Chemist at Play Neck Knee Roll On 40ml + Under-Arm Roll-On F","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Neck Knee Roll on + Roll on: FF","st":"Active"},"B0D2RNPD1Q":{"n":"Chemist at Play Brightening Body Wash 236ml + 30x Vitamin C ","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening BW 236 ml + Brightening FW","st":"Active"},"B09TR2FZS2":{"n":"Bare Anatomy Colour Protect Hair Mask 250g","b":"BA","c":"Hair Mask","r":"Color","cl":"Others","s":"Color Hair Mask 250 g","st":"Active"},"B0DHL42VFQ":{"n":"Vinci Botanicals Bergamot Geranium Hand Cleanser 500 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Hand Cleanser 500 ml","st":"Active"},"B0CTKBRFMK":{"n":"Chemist at Play Foot Cream 50g(Pack of 2)","b":"CAP","c":"Combo","r":"Foot cream","cl":"Others","s":"Foot Cream (Pack Of 2)","st":"Active"},"B0C3LRCKYP":{"n":"Chemist at Play Neck Knee Roll On 40ml + Under-Arm Roll-On P","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Neck Knee Roll on + Roll on: peach","st":"Active"},"B0FQJ55N4F":{"n":"Chemist at Play SPF Body Lotion (236ml) + Exfoliating Body W","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Brightening Body Lotion (236ml) + Exfoliating Body Wash (236ml)","st":"Active"},"B0G71DLD1X":{"n":"Chemist At Play Gentle Exfoliating Face Wash 100ml + Gentle ","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating FW 100 ml + FS 100 ml","st":"Active"},"B0G71DBDDQ":{"n":"Chemist At Play Brightening Body Wash 236ml + 10% Vitamin C ","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening BW 236 ml + FS 10 ml","st":"Active"},"B0CHMCNCYQ":{"n":"Bare Anatomy Ultra Smoothing Shampoo 250ml (Pack of 2)","b":"BA","c":"Shampoo","r":"Ultra Smoothing","cl":"Others","s":"Ultra Smoothing Shampoo (Pack Of 2)","st":"Active"},"B0CLRJBZ7Z":{"n":"Chemist at Play Exfoliating Body Scrub 75g + AHA Body Lotion","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Body Scrub + AHA Body Lotion","st":"Active"},"B0FQJ22236":{"n":"Chemist At Play Natural Lip Balm (4.5g) + Aqua Underarm Roll","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Natural Lip Balm (4.5g) + Aqua Underarm Roll-On (40ml)","st":"Active"},"B0BS9318R8":{"n":"Chemist at Play UnderArm Roll-On Fragrance-Free 40ml (Pack o","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Fragnance Free (Pack Of 3)","st":"Active"},"B0CQCVDP6M":{"n":"Chemist at Play Anti-Aging Body Lotion 200ml(Pack of 2)","b":"CAP","c":"Combo","r":"Retinol","cl":"Others","s":"Retinol Body Lotion Pack of 2","st":"Active"},"B0FQHVQTVD":{"n":"Chemist at Play Exfoliating Body Wash (236ml) + 10% Vitamin ","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating Body Wash (236ml) + 10% Vitamin C Face Serum (10ml)","st":"Active"},"B0DZHP25P5":{"n":"SunScoop Ceramide & Rice Water Gel Sunscreen | SPF 50+ PA+++","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Hi Growth","s":"Water Gel Sunscreen 45 g","st":"Phased Out"},"B0G6ZLCVDT":{"n":"Chemist At Play Natural Lip Balm 4.5g + 10% Vitamin C Face S","b":"CAP","c":"Combo","r":"Lip Balm + Brightening","cl":"Others","s":"Natural LB + Brightening FS 10 ml","st":"Active"},"B0F9YHDXF5":{"n":"Chemist At Play Exfoliating Kit 140ml","b":"CAP","c":"Kit","r":"Exfoliating","cl":"Others","s":"Exfoliating Kit (Set Of 3 Body Wash - 50 ml- Body Lotion- 50 ml & Under Arm Roll On- 40 ml)","st":"Active"},"B0CVTMFGJC":{"n":"Bare Anatomy Curl Defining Shampoo 250ml + Curl Defining Gel","b":"BA","c":"Combo","r":"Curl","cl":"Others","s":"Curl Shampoo + Gel","st":"Active"},"B0G713R9LR":{"n":"Chemist At Play Cherry Lip Balm 4.5g + 10% Vitamin C Face Se","b":"CAP","c":"Combo","r":"Lip Balm + Brightening","cl":"Others","s":"Natural LB + Brightening FS 10 ml","st":"Active"},"B0G71J9SQF":{"n":"Chemist At Play SPF Body Lotion 236ml + Exfoliating Body Was","b":"CAP","c":"Combo","r":"Brightening + Exfoliating","cl":"Others","s":"Brightening BL + Exfoliating BW 236 ml","st":"Active"},"B0BCZ9X7N2":{"n":"Chemist at Play Acne Body Wash 236ml + Loofah","b":"CAP","c":"Body Wash","r":"Acne","cl":"Others","s":"Acne BW + Loofah","st":"Active"},"B0CJCC6CHV":{"n":"Chemist at Play Exfoliating Body Scrub 75g (Pack of 2)","b":"CAP","c":"Body Scrub","r":"Exfoliating","cl":"Others","s":"Body Scrub (Pack Of 2)","st":"Active"},"B0CHK13TVR":{"n":"Chemist at Play UnderArm Roll-On Deodorant Royal Oudh Fragra","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Royal Oudh (Pack Of 3)","st":"Active"},"B0FQJ25LYZ":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Anti-Hair Fal","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti-Grey Serum (50ml) + Anti-Hair Fall Shampoo (250ml)","st":"Active"},"B0G71WCDZL":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Acne Control F","b":"CAP","c":"Combo","r":"Exfoliating + Acne Control","cl":"Others","s":"Exfoliating BW 236 ml + Acne Control FW 100 ml","st":"Active"},"B0CLJ96J8R":{"n":"Chemist at Play UnderArm Roll-On Deodorant Peach Fragrance 4","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Peach (Pack Of 3)","st":"Active"},"B0CHFR5F4B":{"n":"Chemist at Play UnderArm Roll-On White Jasmine Fragrance 40m","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: White Jasmine (Pack Of 3)","st":"Active"},"B0FQHV8DXB":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Advanced Hair","b":"BA","c":"Combo","r":"Hair Growth","cl":"Others","s":"Anti-Grey Serum (50ml) + Hair Growth Serum (30ml)","st":"Active"},"B0FPBJ6PGT":{"n":"Chemist at Play Brightening Neck Knee Roll On 40ml + Brighte","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Neck Knee Roll On 40ml + Brightening Body Wash 236 ml","st":"Active"},"B0DWP4YSZP":{"n":"Chemist at Play Gentle & Hydrating Face Cleanser 100ml + Gen","b":"CAP","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating Face Cleanser + Face Scrub","st":"Active"},"B0FQJ1F3JQ":{"n":"Chemist at Play Exfoliating Body Wash (236ml) + Acne Control","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating Body Wash (236ml) + Acne Control Body Wash (236ml)","st":"Active"},"B0CHJXR7LG":{"n":"Chemist at Play UnderArm Roll-On Woody Musk Fragrance | 40ml","b":"CAP","c":"Roll on","r":"Roll on","cl":"Others","s":"Roll on: Woody Musk (Pack Of 3)","st":"Active"},"B0CJCG9Y7H":{"n":"Chemist at Play Exfoliating Body Scrub 75g + UnderArm Roll-O","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Body Scrub + Roll on: Aqua","st":"Active"},"B0D2RMPLQ7":{"n":"Chemist at Play Acne Body Wash 236ml + 2% Salicylic Acid Fac","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne BW + Acne FW","st":"Active"},"B0FQHZYGZR":{"n":"Chemist at Play Exfoliating Body Wash (236ml) + Neck, Knee &","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating Body Wash (236ml) + Neck, Knee & Elbow Brightening Roll-On (40ml)","st":"Active"},"B0FPBJZ98X":{"n":"Bare Anatomy Advanced Anti-Grey Serum 50ml + Anti Dandruff S","b":"BA","c":"Combo","r":"Anti Grey","cl":"Others","s":"Anti Grey Serum 50 ml + Anti Dandruff Shampoo 250 ml","st":"Active"},"B0CTKP1YJ9":{"n":"Chemist At Play Under Eye Cream 15g(Pack of 2)","b":"CAP","c":"Combo","r":"Under eye","cl":"Others","s":"Under Eye Cream (Pack Of 2)","st":"Active"},"B0FQJ7PWSV":{"n":"Chemist At Play Exfoliating Face Scrub (100g) + Exfoliating ","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating Face Scrub (100g) + Exfoliating Body Wash (236ml)","st":"Active"},"B0G8H94W17":{"n":"Chemist At Play Hyaluronic Acid Face Serum 10ml","b":"CAP","c":"Face Serum","r":"Hydrating","cl":"Others","s":"1.5% Hyaluronic Acid Face Serum - 10 ml","st":"Active"},"B0FW4MFCM7":{"n":"Anecdote Pure Himalayan Shilajit Gummies 3000mg | Pack of 60","b":"Anecdote","c":"Shilajit","r":"","cl":"Others","s":"","st":"Active"},"B0F7H7KTLQ":{"n":"Vinci Botanicals Bergamot Geranium Body Cleanser 90 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Cleanser 90 ml","st":"Active"},"B0G71YKN79":{"n":"Chemist At Play Odour Control Body Wash 236ml + Aqua Fragran","b":"CAP","c":"Combo","r":"Odour Control + Roll On","cl":"Others","s":"Odour Control BW 236 ml + Roll On : Aqua 40ml","st":"Active"},"B0CXDY9DMD":{"n":"Bare Anatomy Handcrafted Black Comb- Gently Detangles & Cont","b":"BA","c":"Comb","r":"Accessories","cl":"Others","s":"Black Comb","st":"Phased Out"},"B0G71BY32C":{"n":"SunScoop 3% Niacinamide Fluid Sunscreen (45ml-Pack of 2)","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"3% Niacinamide Fluid Sunscreen 45 g Pack of 2","st":"Active"},"B0G8HFNQ2Q":{"n":"Chemist At Play Hyaluronic Acid Face Serum 30ml","b":"CAP","c":"Face Serum","r":"Hydrating","cl":"Others","s":"1.5% Hyaluronic Acid Face Serum - 30 ml","st":"Active"},"B0DHL7X9S3":{"n":"Vinci Botanicals Frankincense Patchouli Hair Cleanser 500 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Frankincense Patchouli Hair Cleanser 500 ml","st":"Active"},"B0F7HC8JFQ":{"n":"Vinci Botanicals Bergamot Geranium Hand cr\u00e8me 500 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Hand Creme 500 g","st":"Active"},"B0B4JPLN2H":{"n":"SunScoop Invisible Body SPF 60 PA++++ Sunscreen Spray For Wo","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Invisible Body Sunscreen 125 ml","st":"Phased Out"},"B0F7H76QH4":{"n":"Vinci Botanicals Bergamot Geranium Body cr\u00e8me 50 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Creme 50 g","st":"Active"},"B0G718JGM4":{"n":"Chemist At Play Gentle Exfoliating Face Wash 100ml + UnderAr","b":"CAP","c":"Combo","r":"Exfoliating + Roll On","cl":"Others","s":"Exfoliating FW 100 ml + Roll On : Aqua 40 ml","st":"Active"},"B0CTKNWV3J":{"n":"Chemist At Play Under Eye Cream 15g + 2% Salicylic Acid Face","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Under Eye Cream + Acne FW","st":"Active"},"B0G6ZV57B5":{"n":"Chemist At Play Hydrating Face Moisturizer 100g + AHA Body L","b":"CAP","c":"Combo","r":"Hydrating + AHA","cl":"Others","s":"Hydrating FM 100 g + AHA BL 236 ml","st":"Active"},"B0DHL4Q6XG":{"n":"Vinci Botanicals Ginger Lime Hand Cleanser 500 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Hand Cleanser 500 ml","st":"Active"},"B0DHL6CMRT":{"n":"Vinci Botanicals Bergamot Geranium Body Cr\u00e8me 500g","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Creme 500 g","st":"Active"},"B0G6ZYYB12":{"n":"Chemist At Play Hydrating Face Moisturizer 100g & Exfoliatin","b":"CAP","c":"Combo","r":"Hydrating + Exfoliating","cl":"Others","s":"Hydrating FM 100 g + Exfoliating FW 100 ml","st":"Active"},"B0F7H48D1K":{"n":"Vinci Botanicals Bergamot Geranium Body Scrub 50 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Scrub 50 g","st":"Active"},"B0F99TR5RZ":{"n":"Vinci Botanicals Ginger Lime Body Cleanser 90 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Body Cleanser 90 ml","st":"Active"},"B0DHL6YBZT":{"n":"Vinci Botanicals Frankincense Patchouli Hair Conditioner 500","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Frankincense Patchouli Hair Conditioner 500 ml","st":"Active"},"B0DHL8C74W":{"n":"Vinci Botanicals Bergamot Geranium Body Cleanser 500 ml","b":"Vinci","c":"Body Wash","r":"Vinci","cl":"Vinci","s":"","st":"Active"},"B0FV38V8ML":{"n":"Anecdote Pure Himalayan Shilajit Resin Cards 500mg | Pack of","b":"Anecdote","c":"Anecdote","r":"Anecdote","cl":"Others","s":"Anecdote Pure Himalayan Shilajit Resin Cards 500mg Pack of 30","st":"Active"},"B0DHL82XY1":{"n":"Vinci Botanicals Ginger Lime Hand Cr\u00e8me 30g","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Hand Creme 30 g","st":"Active"},"B0DVR9RGZT":{"n":"Vinci Botanicals Bergamot Geranium Luxury Bath & Body Set | ","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Cleanser & Cream","st":"Active"},"B0CQCTFPWF":{"n":"Chemist at Play Anti-Aging Body Lotion 200ml + Exfoliating B","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + AHA Body Lotion","st":"Active"},"B0DVHN31LW":{"n":"Vinci Botanicals Bergamot Geranium Gift Set Pack of 4","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Gift Set (Pack of 4)","st":"Active"},"B0FGVDJ92Z":{"n":"Vinci Botanicals Frankincense Patchouli Hair Cleanser 90 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Others","s":"Frankincense Patchouli Hair Cleanser 90 ml","st":"Active"},"B0GMXLYMWV":{"n":"Chemist At Play Epsom Salt Body Wash 236ml","b":"CAP","c":"Body Wash","r":"Epsom Salt","cl":"New Launch","s":"Epsom Salt BW 236ml","st":"Active"},"B0CTKL7TNQ":{"n":"Chemist at Play Foot Cream 50g + Exfoliating Body Wash 236ml","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Foot Cream + Exfoliating BW","st":"Active"},"B0FHJ5SB64":{"n":"Anecdote Pure Himalayan Shilajit Honey Sticks | 30 Sticks","b":"Anecdote","c":"Anecdote","r":"Anecdote","cl":"Others","s":"Anecdote Shilajit (30 Sticks)","st":"Active"},"B0CQCT4XFJ":{"n":"Chemist at Play Anti-Aging Body Lotion 200ml + Brightening B","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Anti Ageing Body Lotion + Brightening FW","st":"Active"},"B0CSD1NTVJ":{"n":"SunScoop Ultra Matte Dry Touch Sunscreen SPF 50 PA+++ |Matte","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Ultra Matte Sunscreen 45 g","st":"Phased Out"},"B0GKG9T5YP":{"n":"Bare Anatomy Nature x Science Fenugreek and Curry Leaves Hai","b":"BA","c":"Hair Spray","r":"Fenugreek","cl":"New Launch","s":"Fenugreek & Curry Leaves Hair Strengthening Spray - 200ml","st":"Active"},"B0DHL6CN8L":{"n":"Vinci Botanicals Bergamot Geranium Body Scrub 200 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Body Scrub 200 g","st":"Active"},"B0G71HZLXR":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Cherry Lip Bal","b":"CAP","c":"Combo","r":"Exfoliating + Lip Balm","cl":"Others","s":"Exfoliating BW 236ml + Cherry LB 4.5g","st":"Active"},"B0G716QZR7":{"n":"Chemist At Play Exfoliating Body Wash 236ml + Natural Lip Ba","b":"CAP","c":"Combo","r":"Exfoliating + Lip Balm","cl":"Others","s":"Exfoliating BW 236ml + Natual LB 4.5g","st":"Active"},"B0F7H485YH":{"n":"Vinci Botanicals Ginger Lime Hand cr\u00e8me 500 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Hand Creme 500 g","st":"Active"},"B0FCCLZSMV":{"n":"Bergamot Geranium Hand Cleanser & Hand Cream","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Others","s":"Bergamot Geranium Hand Cleanser & Hand Cream","st":""},"B0FJ5RTBT1":{"n":"Bare Anatomy Rosemary Water Spray 200ml + Bare Anatomy Anti ","b":"BA","c":"Combo","r":"Rosemary","cl":"Combo","s":"Rosemary Water Spray + Anti Frizz Shampoo","st":"Active"},"B0D2RMF65Q":{"n":"Chemist at Play Hydrating Body Wash 236ml + Gentle & Hydrati","b":"CAP","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating BW 236 ml + Face Cleanser","st":"Active"},"B0CQCT9P7L":{"n":"Chemist at Play Anti-Aging Body Lotion 200ml + Exfoliating B","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Anti Aging Body Lotion + Body Scrub","st":"Active"},"B0CSCZC4DP":{"n":"SunScoop Invisible Primer Sunscreen Gel SPF 50 PA+++ | For D","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Invisible Primer Sunscreen 45 g","st":"Phased Out"},"B0D17C48CB":{"n":"Bare Anatomy Microfiber Hair Wrap- Super Absorbent & Lightwe","b":"BA","c":"Hair Wrap","r":"Accessories","cl":"Others","s":"Micro Fiber Hair Towel","st":"Phased Out"},"B0DVRL8HSJ":{"n":"Vinci Botanicals Bergamot Geranium Luxury Bath & Body Set | ","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Bergamot Geranium Hand Cleanser & Body Cleanser & Body Cream","st":"Active"},"B0G4959WB7":{"n":"Bare Anatomy Advanced Hair Density Roll-On 25ml","b":"BA","c":"Hair Roll On","r":"Hair Roll On","cl":"Others","s":"Hair Density Roll On 25 ml","st":"Active"},"B0GL29YDQ2":{"n":"Bare Anatomy Expert Anti-Hair Fall Shampoo (100ml) & Advance","b":"BA","c":"","r":"Hairfall + Hair Growth","cl":"Others","s":"Anti-Hair Fall Shampoo 100 ml + Hair Growth Serum 30 ml","st":"Active"},"B0BK115MYF":{"n":"Bare Anatomy EXPERT Anti-Dandruff Hair Mask | 250g","b":"BA","c":"Hair Mask","r":"Dandruff","cl":"Others","s":"Anti Dandruff Mask 250 g","st":"Phased Out"},"B0C17N733N":{"n":"SunScoop Brightening Daily Sunscreen SPF 50 | Zinc Oxide UV ","b":"SS","c":"Sunscreen","r":"Brightening","cl":"Others","s":"Brightening Cream Sunscreen 45 g","st":"Phased Out"},"B0DHL72MWS":{"n":"Vinci Botanicals Ginger Lime Body Cleanser 500 ml","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Body Cleanser 500 ml","st":"Active"},"B0DVRBFSX2":{"n":"Vinci Botanicals Ginger Lime Luxury Bath & Body Set Pack of ","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Body Cleanser + Cream","st":"Active"},"B0CJCG4WYH":{"n":"Body Scrub + Brightening FW","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Body Scrub + Brightening FW","st":"Combo"},"B0G715N9JH":{"n":"Chemist At Play Deep Cleansing Body Wash 236ml + Royal Oudh ","b":"CAP","c":"Combo","r":"Deep Cleaning + Roll On","cl":"Others","s":"Deep Cleansing BW 236 ml + Roll On : Royal Oudh 40 ml","st":"Active"},"B0CSCV4NX2":{"n":"SunScoop Glow Even Tone Sunscreen SPF 50 PA++++ | Tinted Fou","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Glow Even Tone Sunscreen 45 g","st":"Phased Out"},"B0DVR99VRY":{"n":"Vinci Botanicals Ginger Lime Gift Set Pack of 4","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Gift Set (Pack of 4)","st":"Active"},"B0DVRMFSHS":{"n":"Vinci Botanicals Ginger Lime Luxury Bath & Body Set | Pack o","b":"Vinci","c":"Combo","r":"Vinci","cl":"Vinci","s":"Ginger Lime Hand Cleanser + Body Cleanser + Cream","st":"Active"},"B0FV39JS6G":{"n":"Anecdote Pure Himalayan Shilajit Resin Cards 500mg | Pack of","b":"Anecdote","c":"Anecdote","r":"Anecdote","cl":"Others","s":"Anecdote Pure Himalayan Shilajit Resin Cards 500mg Pack of 60","st":"Active"},"B0F7LBFFR7":{"n":"Bare Anatomy Castor Oil Pressed 50ml","b":"BA","c":"Hair Oil","r":"Oil","cl":"Others","s":"Castor Oil 50ml","st":"Active"},"B0G498XH97":{"n":"Bare Anatomy Advanced Hair Density Serum 30ml","b":"BA","c":"Hair Serum","r":"Hair Serum","cl":"Others","s":"Hair Density Serum 30 ml","st":"Active"},"B0CHZ2D8JF":{"n":"Chemist At Play 1% Salicylic Acid Exfoliating Body Wash 236m","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Brightening Body Lotion","st":"Phased Out"},"B0CQCT2Q6B":{"n":"Sunscoop Hydrating Fluid & Brightening Sunscreen Combo SPF 6","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Hydrating Fluid + Brightening Sunscreen","st":"Phased Out"},"B0BJ4SPH3K":{"n":"Bare Anatomy Anti-Hair Fall Mask | Provides 5X Hair Fall Con","b":"BA","c":"Hair Mask","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Mask 250 g","st":"Phased Out"},"B0FGV9VT3G":{"n":"Frankincense Patchouli Hair Conditioner 50 g","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Others","s":"Frankincense Patchouli Hair Conditioner 50 g","st":""},"B0DHL9J2B8":{"n":"Vinci Botanicals Ginger Lime Body Cr\u00e8me 500g","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Body Creme 500 g","st":"Active"},"B0DW4P3TMQ":{"n":"Vinci Botanicals Ginger Lime Luxury Hand Care Set 500 ml Eac","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Hand Cleanser + Cream","st":"Active"},"B0DHL6BWMJ":{"n":"Vinci Botanicals Ginger Lime Body Scrub | 200 gm","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Vinci","s":"Ginger Lime Body Scrub 200 g","st":"Active"},"B0G2MFXT7G":{"n":"Chemist At Play Foot Roll-on | 50gm","b":"CAP","c":"Roll On","r":"Foot cream","cl":"Others","s":"Foot Roll-on 50 ml","st":"Hold"},"B0CYNYH5Z7":{"n":"Bare Anatomy Nature x Science Rosemary & Coconut Milk Hydrat","b":"BA","c":"Shampoo","r":"Rosemary","cl":"Others","s":"Rosemary Shampoo 200 ml","st":"Not to be sold on amazon"},"B0CFV589N5":{"n":"Chemist at Play Brightening Body Lotion | Skin Moisturizatio","b":"CAP","c":"Body Lotion","r":"Brightening","cl":"Others","s":"Brightening Body Lotion (Tube) 200 ml","st":"Phased Out"},"B0CRBB42JF":{"n":"Bare Anatomy Junior Detangler Hair Spray | For 3+ Year Old K","b":"BA","c":"Hair Spray","r":"Kids","cl":"Others","s":"Detangler Spray 150 ml","st":"Phased Out"},"B0D4MDC88K":{"n":"Sunscoop Oil-Control Gel Sunscreen | SPF 50+ PA++++ | Minera","b":"SS","c":"Sunscreen","r":"Oil Control","cl":"Others","s":"Oil Control Sunscreen 45 g","st":"Phased Out"},"B0CQCRLQNG":{"n":"SunScoop Brightening Daily Sunscreen SPF 50 With Niacinamide","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Daily Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CTKM2KS1":{"n":"Chemist at Play Foot Cream for Cracked Heels | Up to 24 hour","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Foot Cream + Brightening Body Lotion","st":"Phased Out"},"B0CWNVD8M6":{"n":"Bare Anatomy Anti-Hair Fall Shampoo + Mask | Provides 5X Hai","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo + Mask + HGS","st":"Phased Out"},"B0CXCW2H72":{"n":"Bare Anatomy Wooden Comb - Made with Beech Wood | Detangles ","b":"BA","c":"Comb","r":"Accessories","cl":"Others","s":"Wooden Comb","st":"Phased Out"},"B0CQCTY8G8":{"n":"SunScoop Invisible Body SPF 60 PA++++ Sunscreen Spray For Wo","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Invisible Body Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CTKQ9KB4":{"n":"Chemist At Play Under Eye Cream with 2% Revital Eye & Quinoa","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Under Eye Cream + Brightening Body Lotion","st":"Phased Out"},"B0B4CGP9LS":{"n":"Bare Anatomy Damage Repair Shampoo + Hair Mask + Serum Kit R","b":"BA","c":"Combo","r":"Damage Repair","cl":"Others","s":"Damage Repair Shampoo + Mask + Serum","st":"Phased Out"},"B0CVTQK45R":{"n":"SunScoop Invisible Primer Sunscreen Gel SPF 50 PA+++ | For D","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Invisible Primer Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CWNV8C71":{"n":"Bare Anatomy Expert Anti-Dandruff Shampoo + Mask | Dandruff ","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + Mask + HGS","st":"Phased Out"},"B0CM3W97JP":{"n":"Chemist at Play Hydrating Face Moisturiser| Polyglutamic Aci","b":"CAP","c":"Moisturizer","r":"Hydrating","cl":"Others","s":"Hydrating Moisturizer 50 g","st":"Phased Out"},"B0CQCTCMB2":{"n":"Sunscoop Hydrating Sunscreen | SPF 50+ PA++++ | Mineral Oil ","b":"SS","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating Sunscreen (Pack Of 2)","st":"Phased Out"},"B0D4MF4497":{"n":"Sunscoop Hydrating Sunscreen | SPF 50+ PA++++ | Mineral Oil ","b":"SS","c":"Sunscreen","r":"Hydrating","cl":"Others","s":"Hydrating Cream Sunscreen 45 g","st":"Phased Out"},"B0F1YTF25X":{"n":"Bare Anatomy Anti Dandruff Shampoo & Conditioner Mask | Redu","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + Conditioner + Mask","st":"Phased Out"},"B0CM3XHBC2":{"n":"Chemist at Play Brightening Day Cream | SPF | Face Cream | S","b":"CAP","c":"Day cream","r":"Brightening","cl":"Others","s":"Day Cream 50 g","st":"Phased Out"},"B0CZLL1FBT":{"n":"SunScoop Glow Even Tone Sunscreen SPF 50 PA++++ | Tinted Fou","b":"SS","c":"Freebie","r":"Freebie","cl":"Others","s":"Glow Even Tone Sunscreen 6 g","st":"Phased Out"},"B0BD57MHXD":{"n":"Bare Anatomy Volumizing Hair Shampoo + Hair Mask + Damage Re","b":"BA","c":"Combo","r":"Volumizing","cl":"Others","s":"Volumizing Shampoo + Mask + Damage Repair Serum","st":"Phased Out"},"B0BD5496VH":{"n":"Bare Anatomy Anti Frizz Shampoo + Hair Mask + Ultra Smoothin","b":"BA","c":"Combo","r":"Anti Frizz","cl":"Others","s":"Anti Frizz Shampoo + Mask + US Hair Serum","st":"Phased Out"},"B0DSWVQH65":{"n":"Bare Anatomy Anti Hair Fall Shampoo + Conditioner Mask | Pro","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Scalp Scrub & Anti Dandruff Shampoo","st":"Phased Out"},"B0BGQ9DMKM":{"n":"Bare Anatomy EXPERT Color Protect Shampoo + Color Protect Ha","b":"BA","c":"Combo","r":"Color","cl":"Others","s":"Color Protect Shampoo + Mask + US Hair Serum","st":"Phased Out"},"B0CVTWMG9F":{"n":"SunScoop Glow Even Tone Sunscreen SPF 50 PA++++ | Tinted Fou","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Glow Even Tone Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CVTP4SM7":{"n":"SunScoop Ultra Matte Dry Touch Sunscreen SPF 50 PA+++ |Matte","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Ultra Matte Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CH8N1DWM":{"n":"Bare Anatomy Ultra Smoothing Hair Serum For Dry & Frizzy Hai","b":"BA","c":"Combo","r":"Ultra Smoothing","cl":"Others","s":"Ultra Smoothing Shampoo + Serum","st":"Phased Out"},"B0CZLNKLH1":{"n":"Sunscoop Hydrating Sunscreen | SPF 50+ PA++++ | Mineral Oil ","b":"SS","c":"Freebie","r":"Freebie","cl":"Others","s":"Hydrating Sunscreen 6 g","st":"Phased Out"},"B0BSTHJ82Z":{"n":"Bare Anatomy Hair Growth Oil | Deep Nourishment | Coconut Al","b":"BA","c":"Hair oil","r":"Oil","cl":"Others","s":"Hair Growth Oil 150 ml","st":"Phased Out"},"B0CSDLJGYR":{"n":"Chemist at Play 30x Vitamin C Face Wash Cleans Oil & Dirt 10","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening FW + Day Cream + Body Wash","st":"Phased Out"},"B0CSDMHH2P":{"n":"Chemist at Play Brightening Boost Face Wash | Brightens & Gi","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening FW + Day Cream","st":"Phased Out"},"B0CSDLBMZV":{"n":"Chemist at Play Gentle & Hydrating Face Cleanser | Hydrates ","b":"CAP","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating FW + Face Moisturizer","st":"Phased Out"},"B0CB1NTBJC":{"n":"Bare Anatomy Expert 24 Hours Strong Hold Hair Wax | Sulphate","b":"BA","c":"Hair Wax","r":"Accessories","cl":"Others","s":"Hair Wax 100 g","st":"Phased Out"},"B0CM3WBGTS":{"n":"Chemist at Play Oil Control Face Moisturiser| 1% Salicylic A","b":"CAP","c":"Moisturizer","r":"Acne","cl":"Others","s":"Oil Control Face Moisturizer 50 g","st":"Phased Out"},"B0CSDMJ3NB":{"n":"Chemist at Play Oil & Acne Control Face Wash | Niacinamide |","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne FW + Acne Face Moisturizer","st":"Phased Out"},"B0CSDLZ6CQ":{"n":"Chemist at Play 2% Salicylic Acid Face Wash For Oily Skin wi","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne FW + Acne Face Moisturizer + Acne BW","st":"Phased Out"},"B0BRJ7YCKS":{"n":"Chemist at Play Anti-Aging Body Lotion with Ceramides | 4% R","b":"CAP","c":"Combo","r":"Retinol","cl":"Others","s":"Anti Aging Body Lotion (Pack Of 2)","st":"Phased Out"},"B0BD8JYRYR":{"n":"Chemist At Play Acne Control Serum + Oily Skin Moisturiser |","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne Serum + Acne Face Moisturizer","st":"Phased Out"},"B0BCWZKDLY":{"n":"Chemist at Play UnderArm Roll On Aqua Fragrance + Exfoliatin","b":"CAP","c":"Combo","r":"Roll on","cl":"Others","s":"Roll on: Aqua + Exfoliating BW + Dry Normal Body Lotion","st":"Phased Out"},"B0B4WB3BGJ":{"n":"Chemist At Play Exfoliating Body Wash + Exfoliating Face Was","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Exfoliating FW","st":"Phased Out"},"B0BGZGT3HY":{"n":"SunScoop Clear Shield Combo - Invisible Face Sunscreen SPF 4","b":"SS","c":"Combo","r":"Kids","cl":"Others","s":"Invisible Sunscreen + Glow Sunscreen","st":"Phased Out"},"B0B317X1WX":{"n":"SunScoop Invisible Sunscreen SPF 40 PA+++ | No White Cast Fo","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Invisible Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CXDYK5V8":{"n":"SunScoop Matte Stick Dry Touch SPF 50+ PA++++ | UVA UVB rays","b":"SS","c":"Sunstick","r":"Sunscreen","cl":"Others","s":"Matte Stick 18 g","st":"Phased Out"},"B0BLRMM27Z":{"n":"Bare Anatomy Hair Fall Control Shampoo + Conditioner Mask + ","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo + Mask + Serum","st":"Phased Out"},"B0BLRNJWXC":{"n":"Bare Anatomy Hair Fall Control Shampoo + Conditioner Mask + ","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo + Mask + Serum + Tonic","st":"Phased Out"},"B0CZLKVJP7":{"n":"SunScoop Invisible Primer Sunscreen Gel SPF 50 PA+++ | For D","b":"SS","c":"Freebie","r":"Freebie","cl":"Others","s":"Invisible Primer Sunscreen 6 g","st":"Phased Out"},"B0C3ZNKYSP":{"n":"Chemist at Play Stretch Mark & Scar Fading Oil | Scar Remova","b":"CAP","c":"Body Oil","r":"Oil","cl":"Others","s":"Stretch Mark Oil 50 ml","st":"Phased Out"},"B0CQCJ5DPS":{"n":"Sunscoop Hydrating Fluid & Mineral Sunstick Sunscreen Combo ","b":"SS","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating Fluid + Mineral Sunstick","st":"Phased Out"},"B09ZKVD3XY":{"n":"SunScoop Glow Tinted SPF 60 Sunscreen Cream For Unisex With ","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Glow Tinted Sunscreen 45 g","st":"Phased Out"},"B0CZLQ3JHC":{"n":"Sunscoop Oil-Control Gel Sunscreen | SPF 50+ PA++++ | Minera","b":"SS","c":"Freebie","r":"Freebie","cl":"Others","s":"Oil Control Gel Sunscreen","st":"Phased Out"},"B0BXWSFPHZ":{"n":"SunScoop Invisible Sunscreen SPF 40 PA+++ | No White Cast | ","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Invisible Sunscreen 45 g","st":"Phased Out"},"B0D22SCTPJ":{"n":"Bare Anatomy Expert Nutri-Smooth Pre Shampoo Mask with Rosem","b":"BA","c":"Hair Mask","r":"Pre Shampoo","cl":"Others","s":"Pre Shampoo Mask 150 g","st":"Phased Out"},"B0BCZ98KRB":{"n":"Chemist at Play Acne Control Body Wash + Acne Control Face S","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne BW + Acne Face Serum 236 ml + 30 ml","st":"Phased Out"},"B09RQ7L7J4":{"n":"Chemist at Play Body Lotion with Ceramides for Dry-Normal Sk","b":"CAP","c":"Body Lotion","r":"Moisturization","cl":"Others","s":"0","st":"Phased Out"},"B0BWNGHKRS":{"n":"SunScoop Mineral Sunstick | SPF 50 | Safe For Kids (3+ Years","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Mineral Sunstick 15 g","st":"Phased Out"},"B0CQCRYZ9S":{"n":"SunScoop Matte SPF 60 Sunscreen Gel For Women & Men With UV ","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Matte Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CQCSKJ4D":{"n":"Sunscoop Oil-Control Gel Sunscreen | SPF 50+ PA++++ | Minera","b":"SS","c":"Combo","r":"Oil Control","cl":"Others","s":"Oil Control Gel Sunscreen (Pack Of 2)","st":"Phased Out"},"B0B6WCHZRS":{"n":"Bare Anatomy Dandruff Remover Hair Tonic|Dandruff Reduction ","b":"BA","c":"Tonic","r":"Dandruff","cl":"Others","s":"Anti Dandruff Hair Tonic 50ml","st":"Phased Out"},"B0CH8BDQWD":{"n":"Bare Anatomy Dandruff Remover Hair Tonic | 50ml + Anti-Dandr","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + Tonic","st":"Phased Out"},"B0B6W74YJG":{"n":"Bare Anatomy Anti-Hair Fall Tonic | Hair Serum For Scalp wit","b":"BA","c":"Tonic","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Tonic 50 ml","st":"Phased Out"},"B09WW3Y3XY":{"n":"SunScoop Fluid Sunscreen Serum SPF 60 PA++ No White Cast For","b":"SS","c":"0","r":"0","cl":"Others","s":"0","st":"Phased Out"},"B0CQCTWKBY":{"n":"Sunscoop Hydrating Fluid & Invisible Sunscreen Combo SPF 60 ","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Hydrating Fluid + Invisible Sunscreen (Pack Of 2)","st":"Phased Out"},"B0CQCTPP12":{"n":"SunScoop Glow Tinted SPF 60 Sunscreen Cream For Unisex With ","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Glow Tinted Sunscreen (Pack Of 2)","st":"Phased Out"},"B0B3HY9L6Q":{"n":"SunScoop Invisible & Glow Sunscreen Combo SPF 40 PA+++ & SPF","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Invisible Sunscreen + Glow Sunscreen","st":"Phased Out"},"B09VSXGBWM":{"n":"SunScoop Matte SPF 60 Sunscreen Gel For Women & Men With UV ","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Matte Sunscreen 45 g","st":"Phased Out"},"B0BFR8YZV8":{"n":"SunScoop Mineral SPF 50 PA++++ Sunscreen Cream For Women & M","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Mineral Sunscreen 45 g","st":"Phased Out"},"B0BK167GYP":{"n":"Bare Anatomy Anti Dandruff Shampoo + Hair Mask + Toner Kit |","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + Mask + Tonic","st":"Phased Out"},"B0BJ2RJ8CM":{"n":"Bare Anatomy Anti Hair Fall Serum Providing 5X Hair Fall Con","b":"BA","c":"Hair serum","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Serum 50 ml","st":"Phased Out"},"B0CZLLJWHF":{"n":"SunScoop Ultra Matte Dry Touch Sunscreen SPF 50 PA+++ |Matte","b":"SS","c":"Freebie","r":"Freebie","cl":"Others","s":"Ultra Matte Sunscreen 6 g","st":"Phased Out"},"B0CHMN2LW3":{"n":"Bare Anatomy Anti-Hair Fall Tonic + Anti Hair Fall Shampoo| ","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shamppoo + Tonic","st":"Phased Out"},"B0C81NQR2Q":{"n":"Bare Anatomy Hair Growth & Anti Hairfall Oil | Coconut Almon","b":"BA","c":"Combo","r":"Oil","cl":"Others","s":"Hair Growth Oil (Pack Of 2)","st":"Phased Out"},"B0CQCT4MST":{"n":"SunScoop Mineral Sunstick SPF 50 For Kids (3+ Years) | Enric","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Mineral Sunstick (Pack Of 2)","st":"Phased Out"},"B0CSDKK8X2":{"n":"Chemist at Play Gentle & Hydrating Face Cleanser | Hydrates ","b":"CAP","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating FW + Face Moisturizer + Hydrating BW","st":"Phased Out"},"B0FM482RY2":{"n":"Chemist At Play's Clarifying Serum | 10% Niacinamide | Treat","b":"CAP","c":"Face serum","r":"Clarifying","cl":"Others","s":"Clarifying Serum- 30 ml","st":"Phased Out"},"B0981CKZ1Q":{"n":"Chemist at Play 11 KDa Hyaluronic Acid with 10% Niacinamide ","b":"CAP","c":"Face serum","r":"Hydrating","cl":"Others","s":"Hydrating Face Serum 30 ml","st":"Phased Out"},"B0981BJP52":{"n":"Chemist at Play Acne Control Face Serum with 10% Azelaic Aci","b":"CAP","c":"Face serum","r":"Acne","cl":"Others","s":"Acne Face Serum 30 ml","st":"Phased Out"},"B0D5H8N947":{"n":"Bare Anatomy Junior Gentle Cleansing Shampoo For Kids | Tear","b":"BA","c":"Combo","r":"Kids","cl":"Others","s":"Kids Shampoo + Detangler Hair Spray","st":"Phased Out"},"B0CBCD2WC8":{"n":"Sunscoop Hydrating Body Lotion SPF 30 PA+++ | UVA & UVB Prot","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Sunscoop Hydrating Body Lotion 180 g","st":"Phased Out"},"B0CXDZ4D72":{"n":"SunScoop Glow Stick Dewy SPF 50+ PA++++ | UVA UVB rays prote","b":"SS","c":"Sunstick","r":"Sunscreen","cl":"Others","s":"Glow Sunstick 18 g","st":"Phased Out"},"B0BRHK5NGY":{"n":"Bare Anatomy Anti Dandruff Shampoo + Conditioner Mask | Redu","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"Anti Dandruff Shampoo + Mask","st":"Phased Out"},"B0995HHH3Q":{"n":"Chemist at Play 10% Vitamin C Face Serum For Skin Brightenin","b":"CAP","c":"Face serum","r":"Brightening","cl":"Others","s":"0","st":"Phased Out"},"B09SM3CC9C":{"n":"Chemist at Play Hydrating Face Wash with Ceramides and_Zemea","b":"CAP","c":"Face Cleanser","r":"Hydrating","cl":"Others","s":"0","st":"Phased Out"},"B0CP9P31M4":{"n":"Sunscoop Oil Control Gel Sunscreen | SPF 50+ PA++++ | Minera","b":"SS","c":"Sunscreen","r":"Sunscreen","cl":"Others","s":"Oil-Control Gel Sunscreen","st":"Will Not be fullfilled"},"B0CP9NMVM3":{"n":"Sunscoop Hydrating Sunscreen | SPF 50+ PA++++ | Mineral Oil ","b":"SS","c":"Sunscreen","r":"Hydrating","cl":"Others","s":"Hydrating Cream Sunscreen","st":"Will Not be fullfilled"},"B0FCDNLCX6":{"n":"Ginger Lime Body Scrub 50 g Tube","b":"Vinci","c":"Vinci","r":"Vinci","cl":"Others","s":"Ginger Lime Body Scrub 50 g Tube","st":""},"B0B4GH651P":{"n":"Acne BW + Acne FW","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne BW + Acne FW","st":"Combo"},"B0BCZ5XVZZ":{"n":"Chemist At Play Exfoliating BW + Dry Normal Body Lotion | 23","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Dry Normal Body Lotion","st":"Combo"},"B0BD8Q245S":{"n":"Acne Serum + Acne FW 30 ml + 100 ml","b":"CAP","c":"Combo","r":"Acne","cl":"Others","s":"Acne Serum + Acne FW 30 ml + 100 ml","st":"Combo"},"B099S4THCG":{"n":"Brightening And Hydrating Face Serum 30 ml + 30 ml","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening + Hydrating Face Serum","st":"Combo"},"B09WHJ832D":{"n":"Brightening Face Serum + BW + Body Lotion + FW + Face Toner","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening Face Serum + Body Wash + Body Lotion + FW + Face Toner","st":"Combo"},"B09WHXC3CS":{"n":"Hydrating Face Serum + BW + Body Lotion + FW + Face Toner","b":"CAP","c":"Combo","r":"Hydrating","cl":"Others","s":"Hydrating Face Serum + BW + Body Lotion + FW + Face Toner","st":"Combo"},"B09WJ9D9Y4":{"n":"Brightening Face Serum + Exfoliating BW + All Skin Types Bod","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"Brightening Face Serum + Exfoliating BW + All Skin Types Body Lotion + Exfoliating FW + Hydrating Face Toner","st":"Combo"},"B0BCWXCY66":{"n":"Exfoliating BW + Under-Arm Roll-On Aqua 236 ml + 40ml","b":"CAP","c":"Combo","r":"Exfoliating","cl":"Others","s":"Exfoliating BW + Roll on: Aqua","st":"Combo"},"B0CKT12YTZ":{"n":"Invisible Body Sunscreen Lotion + Invisible Face Sunscreen","b":"SS","c":"Combo","r":"Sunscreen","cl":"Others","s":"Invisible Body Sunscreen + Invisible Face Sunscreen","st":"Combo"},"B0D14VHY1V":{"n":"Rosemary Hydrating Shampoo + Conditioner","b":"BA","c":"Combo","r":"Rosemary","cl":"Others","s":"Rosemary Shampoo + Conditioner","st":"Combo"},"B0D66G5292":{"n":"HF Combo -Pack of 3","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"0","st":"Active"},"B0D9LQPFXR":{"n":"HF Combo -Pack of 4","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"0","st":"Active"},"B0D8L68CJL":{"n":"Ultra Smoothing Shampoo, Pack of 3","b":"BA","c":"Combo","r":"Ultra Smothening","cl":"Others","s":"0","st":"Active"},"B0D66K14DH":{"n":"Dandruff Combo -Pack of 3","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"0","st":"Active"},"B0D9LRFV8T":{"n":"Dandruff Combo -Pack of 3","b":"BA","c":"Combo","r":"Dandruff","cl":"Others","s":"0","st":"Active"},"B0BRHJJGCJ":{"n":"Anti Hair Fall Shampoo + Anti Hair Fall Mask","b":"BA","c":"Combo","r":"Hairfall","cl":"Others","s":"Anti Hair Fall Shampoo + Mask","st":"Combo"},"B0F6CWYGXC":{"n":"Bare Anatomy Anti-Dandruff Shampoo (100 ml) + Rosemary Water","b":"Vinci","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FM474LYN":{"n":"Clarifying Serum- 10 ml","b":"CAP","c":"Face serum","r":"Clarifying","cl":"Others","s":"Clarifying Serum- 10 ml","st":""},"B0BHJDMHKJ":{"n":"Under Eye Cream-15 g","b":"CAP","c":"Eye Cream","r":"Under eye","cl":"Others","s":"0","st":""},"B0DTK68C9B":{"n":"Bare Anatomy Nature x Science Rosemary Water Spray for Hair ","b":"BA","c":"0","r":"0","cl":"Combo","s":"0","st":""},"B0FWC5KZD2":{"n":"Anecdote Pure Himalayan Shilajit Resin Cards 500mg","b":"Anecdote","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FT3GFSL4":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Anti-Hair Fal","b":"BA","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FT3HSJZ9":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Advanced Hair","b":"BA","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FT3HJDFX":{"n":"Bare Anatomy Advanced Anti-Grey Serum (50ml) + Rosemary Wate","b":"BA","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FT3FVXYF":{"n":"Bare Antomy Advanced Hair Serum Variation","b":"BA","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FCDP968W":{"n":"Vinci Botanicals Hand Creme Parnet","b":"Vinci","c":"0","r":"0","cl":"Others","s":"0","st":""},"B0FCCGT5QP":{"n":"Ginger Lime Body creme | Aromatic Hydrating Body Cream | Int","b":"Vinci","c":"0","r":"0","cl":"Others","s":"0","st":""},"B09SLZWKJ3":{"n":"Acne Control Face Wash-100 ml","b":"CAP","c":"Face Cleanser","r":"Acne","cl":"Others","s":"0","st":""},"B09SLZWVSL":{"n":"Brightening Face Wash-100ml","b":"CAP","c":"Face Cleanser","r":"Brightening","cl":"Others","s":"0","st":""},"B0FWKGY14F":{"n":"Brightening Body Wash & Face Wash Set","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"0","st":""},"B0FWKG3759":{"n":"Brightening Face Wash & Exfoliating Scrub Set","b":"CAP","c":"Combo","r":"Brightening","cl":"Others","s":"0","st":""},"B0FWKG2K7X":{"n":"Face Wash Set","b":"CAP","c":"Face wash","r":"Gentle Soothing","cl":"Others","s":"0","st":""},"B0GQGR6MM5":{"n":"Bare Anatomy Anti-Hair Fall Shampoo -750ml","b":"BA","c":"Shampoo","r":"Hairfall","cl":"","s":"Anti Hair Fall Shampoo 750 ml","st":"Active"},"B0GS65HJ1C":{"n":"Bare Anatomy Advanced Hair Growth Serum Roll-On - 25ml-Pack ","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Others","s":"Advanced Hair Growth Serum Roll-On - 25ml-Pack of 2","st":"Active"},"B0GS623PS6":{"n":"Bare Anatomy Advanced Hair Growth Serum Roll-On - 25ml-Pack ","b":"BA","c":"Hair Serum","r":"Hair Growth","cl":"Others","s":"Advanced Hair Growth Serum Roll-On - 25ml-Pack of 3","st":"Active"},"B0GPQ9WJW4":{"n":"Chemist At Play Deep Cleansing Charcoal Body Wash & 10% Vita","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Deep Cleansing Charcoal Body Wash & 10% Vitamin C Face Serum Combo | 236ml + 30ml","st":"Active"},"B0GPPRJ879":{"n":"Chemist At Play Deep Cleansing Activated Charcoal Body Wash ","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Deep Cleansing Activated Charcoal Body Wash & 30x Vitamin C Face Wash Combo | 236ml + 100ml","st":"Active"},"B0GPQC4WKJ":{"n":"Chemist At Play Intensely Hydrating Face Moisturizer & Under","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Intensely Hydrating Face Moisturizer & Under Eye Cream Combo | 100g + 15g","st":"Active"},"B0GPPYMQ1S":{"n":"Chemist At Play Hydrating Face Moisturizer & 10% Vitamin C F","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Hydrating Face Moisturizer & 10% Vitamin C Face Serum Combo | 100g + 30ml","st":"Active"},"B0GQ3P6RDS":{"n":"Chemist at Play 30x Vitamin C Face Wash, 10% Vitamin C Face ","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"30x Vitamin C Face Wash, 10% Vitamin C Face Serum & Under Eye Cream Combo | 100ml + 30ml + 15g","st":"Active"},"B0GQ3NQQJ6":{"n":"Chemist At Play Hydrating Face Moisturizer, 10% Vitamin C Fa","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Hydrating Face Moisturizer, 10% Vitamin C Face Serum & Under Eye Cream Combo | 100g + 10ml + 15g","st":"Active"},"B0GP7Z211P":{"n":"Bare Anatomy Ultra Smoothing & Damage Repair Shampoo Combo |","b":"BA","c":"Combo","r":"Combo","cl":"","s":"Ultra Smoothing & Damage Repair Shampoo Combo | 250ml + 250ml","st":"Active"},"B0GP76YT68":{"n":"Bare Anatomy Ultra Smoothing Shampoo & Rosemary Essential Oi","b":"BA","c":"Combo","r":"Combo","cl":"","s":"Ultra Smoothing Shampoo & Rosemary Essential Oil Combo | 250ml + 15ml","st":"Active"},"B0GP6WJWZL":{"n":"Chemist at Play Exfoliating Body Scrub & Bare Anatomy Ultra ","b":"BA & CAP","c":"Combo","r":"Combo","cl":"","s":"Exfoliating Body Scrub & Ultra Smoothing Shampoo Combo | 75g & 250ml","st":"Active"},"B0GP6SQQXW":{"n":"Chemist at Play 1% Salicylic Acid Body Wash & Bare Anatomy U","b":"BA & CAP","c":"Combo","r":"Combo","cl":"","s":"1% Salicylic Acid Body Wash & Ultra Smoothing Shampoo Combo | 236ml & 250ml","st":"Active"},"B0GP73P615":{"n":"Chemist At Play Odour Control Bodywash & Bare Anatomy Ultra ","b":"BA & CAP","c":"Combo","r":"Combo","cl":"","s":"Odour Control Bodywash & Ultra Smoothing Shampoo Combo | 236ml & 250ml","st":"Active"},"B0GLQ731XK":{"n":"SunScoop Niacinamide Sunscreen Combo | 45ml + 200ml","b":"SS","c":"Sunscreen","r":"Combo","cl":"","s":"Niacinamide Sunscreen Combo | 45ml + 200ml","st":"Active"},"B0GPQ3ZJ3D":{"n":"Chemist At Play Hydrating Face Moisturizer & 10% Vitamin C F","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Hydrating Face Moisturizer & 10% Vitamin C Face Serum Combo | 100g + 10ml","st":"Active"},"B0GQ3BDWFX":{"n":"Chemist at Play 30x Vitamin C Face Wash, Brightening Body Wa","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"30x Vitamin C Face Wash, Brightening Body Wash & 10% Vitamin C Face Serum Combo | 100ml + 236ml + 10ml","st":"Active"},"B0GPPXHSSX":{"n":"Chemist At Play Deep Cleansing Charcoal Body Wash & 10% Vita","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Deep Cleansing Charcoal Body Wash & 10% Vitamin C Face Serum Combo | 236ml + 10ml","st":"Active"},"B0GP73Q5CW":{"n":"Chemist at Play Brightening Body Wash & Bare Anatomy Ultra S","b":"BA & CAP","c":"Combo","r":"Combo","cl":"","s":"Brightening Body Wash & Ultra Smoothing Shampoo Combo | 236ml & 250ml","st":"Active"},"B0GP72VJ61":{"n":"Chemist at Play Brightening Body Wash, Vitamin C Face Wash &","b":"BA & CAP","c":"Combo","r":"Combo","cl":"","s":"Brightening Body Wash, Vitamin C Face Wash & Ultra Smoothing Shampoo Combo | 236ml, 250ml & 100ml","st":"Active"},"B0GPQKHF8W":{"n":"Chemist at Play Vitamin C Face Wash, Brightening Body Wash &","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Vitamin C Face Wash, Brightening Body Wash & 10% Vitamin C Face Serum Combo | 100ml + 236ml + 10ml","st":"Active"},"B0GPQC9BK4":{"n":"Chemist at Play 30x Vitamin C Face Wash, 10% Vitamin C Face ","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"30x Vitamin C Face Wash, 10% Vitamin C Face Serum & Under Eye Cream Combo | 100ml + 10ml + 15g","st":"Active"},"B0GPQKMXDW":{"n":"Chemist At Play Hydrating Face Moisturizer, 10% Vitamin C Fa","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Hydrating Face Moisturizer, 10% Vitamin C Face Serum & Under Eye Cream Combo | 100g + 10ml + 15g","st":"Active"},"B0GPQMFWN4":{"n":"Chemist at Play 30x Vitamin C Face Wash, Brightening Body Wa","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"30x Vitamin C Face Wash, Brightening Body Wash, 10% Vitamin C Face Serum & Under Eye Cream Combo | 100ml + 236ml + 10ml + 15g","st":"Active"},"B0GPQHMJ52":{"n":"Chemist at Play Vitamin C Face Wash, Hydrating Face Moisturi","b":"CAP","c":"Combo","r":"Combo","cl":"","s":"Vitamin C Face Wash, Hydrating Face Moisturizer,10% Vit-C Face Serum & Under Eye Cream Combo | 100ml + 100g + 10ml + 15g","st":"Active"},"B0GTMQ7BK5":{"n":"Chemist At Play Exfoliating Body Wash 236ml (Pack of 2)","b":"CAP","c":"Body Wash","r":"Exfoliating","cl":"","s":"Exfoliating Body Wash 236ml (Pack of 2)","st":"Active"}};
 const CATEGORIES=["0", "Anecdote", "Body Lotion", "Body Oil", "Body Scrub", "Body Wash", "Body lotion", "Comb", "Combo", "Conditioner", "Cover up", "Day cream", "Eye Cream", "Face Cleanser", "Face Moisturizer", "Face Scrub", "Face Serum", "Face Wash", "Face serum", "Face toner", "Face wash", "Foot Cream", "Freebie", "Gel", "Hair Mask", "Hair Oil", "Hair Roll On", "Hair Serum", "Hair Spray", "Hair Stick", "Hair Wax", "Hair Wrap", "Hair oil", "Hair serum", "Kit", "Leave in conditioner", "Lip Balm", "Moisturizer", "Neck Roll On", "Night Cream", "Roll On", "Roll on", "Scalp Massager", "Scalp Spray", "Scalp scrub", "Shampoo", "Shilajit", "Style Spray", "Sunscreen", "Sunstick", "Tonic", "Vinci"];
@@ -153,7 +166,7 @@ function fN(n){if(n==null)return'—';return Math.round(n).toLocaleString('en-IN
 function pct(n){if(n==null||isNaN(n))return'—';return n.toFixed(1)+'%'}
 function wowArrow(cur,prev){if(!prev||!cur)return'';const d=((cur-prev)/prev*100);if(d>0)return`<span class="wow-up">▲${d.toFixed(0)}%</span>`;if(d<0)return`<span class="wow-down">▼${Math.abs(d).toFixed(0)}%</span>`;return'—';}
 
-let S={ads:null,rank:[],brands:new Set(['ALL']),tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null};
+let S={ads:null,rank:[],sales:null,brands:new Set(['ALL']),page:'ads',tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',compStart:'',compEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null,bizSort:'net',bizDir:-1};
 
 function getDateRange(){const now=new Date();const y=now.getFullYear();const m=now.getMonth();switch(S.datePeriod){case'7d':{const d=new Date();d.setDate(d.getDate()-7);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'14d':{const d=new Date();d.setDate(d.getDate()-14);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'this_month':return{start:`${y}-${String(m+1).padStart(2,'0')}-01`,end:'9999-12-31'};case'last_month':{const lm=m===0?11:m-1;const ly=m===0?y-1:y;const ld=new Date(y,m,0).getDate();return{start:`${ly}-${String(lm+1).padStart(2,'0')}-01`,end:`${ly}-${String(lm+1).padStart(2,'0')}-${ld}`};}case'3months':{const d=new Date();d.setMonth(d.getMonth()-3);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'custom':if(S.dateStart&&S.dateEnd)return{start:S.dateStart,end:S.dateEnd};default:return{start:'2000-01-01',end:'9999-12-31'};}}
 function isDateAll(){return S.datePeriod==='all';}
@@ -176,6 +189,52 @@ function getAllBD(){if(!S.ads)return[];const arr=Array.isArray(S.ads)?S.ads:[S.a
 function getFiltBD(){const all=getAllBD();if(isBrandAll())return all;return all.filter(d=>S.brands.has(d.brand));}
 function getLatestDate(){const all=getAllBD();let latest='';all.forEach(bd=>{Object.keys(bd.daily_totals||{}).forEach(d=>{if(d>latest)latest=d;});});return latest;}
 function getRankMap(){if(!S.rank.length)return{};const dates=[...new Set(S.rank.map(d=>d.date))].sort();const lat=dates[dates.length-1];const m={};S.rank.filter(d=>d.date===lat).forEach(d=>{m[d.keyword]={rank:d.organic_rank,sp:d.our_sponsored_position,product:d.product_name,asin:d.asin||''};});return m;}
+
+// Sales data helper — returns {net, ordered, mrp, gross, units, disc_pct, tacos} for current filters
+function getSalesMetrics(bds){
+  if(!S.sales||!S.sales.brands) return null;
+  const brandMap={'Bare Anatomy':'Bare Anatomy','Chemist at Play':'Chemist at Play','Sunscoop':'Sunscoop'};
+  const dateFiltered=!isDateAll();
+  const{start,end}=dateFiltered?getDateRange():{start:'',end:''};
+  let net=0,ordered=0,mrp=0,gross=0,units=0,units_net=0;
+  const monthly={};
+  // Which brands to include
+  const brandNames=bds.map(d=>d.brand);
+  
+  brandNames.forEach(bn=>{
+    const sbd=S.sales.brands[bn];
+    if(!sbd)return;
+    Object.entries(sbd.daily||{}).forEach(([dt,v])=>{
+      if(dateFiltered&&(dt<start||dt>end))return;
+      net+=v.net||0;ordered+=v.ordered||0;mrp+=v.mrp||0;gross+=v.gross||0;
+      units+=v.units||0;units_net+=v.units_net||0;
+      const m=dt.slice(0,7);
+      if(!monthly[m])monthly[m]={net:0,ordered:0,mrp:0,gross:0,units:0};
+      monthly[m].net+=v.net||0;monthly[m].ordered+=v.ordered||0;
+      monthly[m].mrp+=v.mrp||0;monthly[m].gross+=v.gross||0;monthly[m].units+=v.units||0;
+    });
+  });
+  const disc_pct=mrp>0?((1-gross/mrp)*100):0;
+  const refund_pct=units>0?((1-units_net/units)*100):0;
+  return{net,ordered,mrp,gross,units,units_net,disc_pct,refund_pct,monthly};
+}
+
+// Get sales for specific ASIN
+function getAsinSales(asin){
+  if(!S.sales||!S.sales.brands)return null;
+  for(const bn of Object.keys(S.sales.brands)){
+    const bd=S.sales.brands[bn];
+    const a=(bd.asins||[]).find(x=>x.asin===asin);
+    if(a)return a;
+  }
+  return null;
+}
+
+// Get brand sales for a specific brand
+function getBrandSales(brandName){
+  if(!S.sales||!S.sales.brands)return null;
+  return S.sales.brands[brandName]||null;
+}
 
 // Get ASIN's campaigns from products data (each product row has campaigns in search_terms)
 function getAsinCampaigns(bds,asin){
@@ -335,15 +394,25 @@ function processCamps(bds){
       });
     });
   } else {
-    // Date filtered: build SP campaign totals from search term camp_data
+    // Date filtered: use ad_groups totals but scale proportionally by product daily data
     bds.forEach(bd=>{
-      (bd.search_terms||[]).forEach(st=>{
-        (st.camp_data||[]).forEach(cd=>{
-          const camp=cd.campaign;if(!camp)return;
-          const k=`${bd.brand}::SP::${camp}`;
-          if(!c[k])c[k]={name:camp,brand:bd.brand,spend:0,sales:0,clicks:0,impr:0,units:0,days:{},budget:0,adType:'SP'};
-          const x=c[k];
-          x.spend+=cd.spend||0;x.sales+=cd.sales||0;x.clicks+=cd.clicks||0;x.units+=cd.units||0;
+      // First get total and filtered product spend per brand to compute ratio
+      let totalProdSpend=0,filtProdSpend=0;
+      (bd.products||[]).forEach(p=>{
+        totalProdSpend+=p.sp_spend||0;
+        Object.entries(p.days||{}).forEach(([d,v])=>{
+          if(d>=start&&d<=end)filtProdSpend+=v.sp_spend||0;
+        });
+      });
+      const ratio=totalProdSpend>0?(filtProdSpend/totalProdSpend):0;
+      const ag=bd.ad_groups||{};
+      Object.entries(ag).forEach(([camp,groups])=>{
+        const k=`${bd.brand}::SP::${camp}`;
+        if(!c[k])c[k]={name:camp,brand:bd.brand,spend:0,sales:0,clicks:0,impr:0,units:0,days:{},budget:0,adType:'SP'};
+        const x=c[k];
+        Object.values(groups).forEach(g=>{
+          x.spend+=Math.round((g.spend||0)*ratio);x.sales+=Math.round((g.sales||0)*ratio);
+          x.clicks+=Math.round((g.clicks||0)*ratio);x.units+=Math.round((g.units||0)*ratio);
         });
       });
     });
@@ -437,13 +506,16 @@ function fmtD(d){return d.toISOString().slice(0,10);}
 function fmtDisplay(ds){if(!ds||ds==='2000-01-01')return'All time';const d=new Date(ds+'T00:00:00');return`${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;}
 function getDateLabel(){if(S.datePeriod==='all')return'All time';if(S.datePeriod==='custom'&&S.dateStart&&S.dateEnd)return`${fmtDisplay(S.dateStart)} – ${fmtDisplay(S.dateEnd)}`;const p=PRESETS.find(p=>{const r=p.fn();const{start,end}=getDateRange();return r.s===start&&(r.e===end||end==='9999-12-31');});return p?p.l:S.datePeriod;}
 
-function openDatePicker(){
+function openDatePicker(target){
   const now=new Date();
   dpState.open=true;
-  dpState.month1=S.dateStart&&S.dateStart!=='2000-01-01'?new Date(S.dateStart+'T00:00:00'):new Date(now.getFullYear(),now.getMonth()-1,1);
+  dpState.target=target||'a'; // 'a' = Period A, 'b' = Period B
+  const src=target==='b'?S.compStart:S.dateStart;
+  const srcEnd=target==='b'?S.compEnd:S.dateEnd;
+  dpState.month1=src&&src!=='2000-01-01'?new Date(src+'T00:00:00'):new Date(now.getFullYear(),now.getMonth()-1,1);
   dpState.month2=new Date(dpState.month1.getFullYear(),dpState.month1.getMonth()+1,1);
-  dpState.selStart=S.dateStart&&S.dateStart!=='2000-01-01'?S.dateStart:null;
-  dpState.selEnd=S.dateEnd&&S.dateEnd!=='9999-12-31'?S.dateEnd:null;
+  dpState.selStart=src&&src!=='2000-01-01'?src:null;
+  dpState.selEnd=srcEnd&&srcEnd!=='9999-12-31'?srcEnd:null;
   dpState.hovering=null;
   renderDatePicker();
 }
@@ -451,14 +523,23 @@ function closeDatePicker(){dpState.open=false;document.getElementById('dp-root')
 function applyDatePicker(){
   if(dpState.selStart&&dpState.selEnd){
     if(dpState.selStart>dpState.selEnd){const t=dpState.selStart;dpState.selStart=dpState.selEnd;dpState.selEnd=t;}
-    S.datePeriod='custom';S.dateStart=dpState.selStart;S.dateEnd=dpState.selEnd;
+    if(dpState.target==='b'){
+      S.compStart=dpState.selStart;S.compEnd=dpState.selEnd;
+    } else {
+      S.datePeriod='custom';S.dateStart=dpState.selStart;S.dateEnd=dpState.selEnd;
+    }
   }
   closeDatePicker();render();
 }
 function selectPreset(idx){
   const p=PRESETS[idx];const r=p.fn();
-  if(r.s==='2000-01-01'){S.datePeriod='all';S.dateStart=S.allDates[0]||'';S.dateEnd=S.allDates[S.allDates.length-1]||'';}
-  else{S.datePeriod='custom';S.dateStart=r.s;S.dateEnd=r.e;}
+  if(dpState.target==='b'){
+    if(r.s==='2000-01-01'){S.compStart='';S.compEnd='';}
+    else{S.compStart=r.s;S.compEnd=r.e;}
+  } else {
+    if(r.s==='2000-01-01'){S.datePeriod='all';S.dateStart=S.allDates[0]||'';S.dateEnd=S.allDates[S.allDates.length-1]||'';}
+    else{S.datePeriod='custom';S.dateStart=r.s;S.dateEnd=r.e;}
+  }
   closeDatePicker();render();
 }
 function dpClickDay(ds){
@@ -500,6 +581,7 @@ function renderDatePicker(){
   if(dpState.selStart&&dpState.selEnd){PRESETS.forEach((p,i)=>{const r=p.fn();if(r.s===dpState.selStart&&r.e===dpState.selEnd)activePreset=i;});}
   let h=`<div class="dp-overlay" onclick="if(event.target===this)closeDatePicker()"><div class="dp-modal">`;
   h+=`<div class="dp-presets">`;
+  h+=`<div style="padding:8px 16px;font-size:11px;font-weight:700;color:${dpState.target==='b'?'var(--purple)':'var(--cyan)'}">${dpState.target==='b'?'Compare Period B':'Period A'}</div>`;
   PRESETS.forEach((p,i)=>{h+=`<button class="dp-preset ${activePreset===i?'active':''}" onclick="selectPreset(${i})">${p.l}</button>`;});
   h+=`</div>`;
   h+=`<div class="dp-cals">`;
@@ -514,6 +596,12 @@ function renderDatePicker(){
 // ── RENDER ──
 function render(){
   try{
+  // Update top nav highlighting
+  const navAds=document.getElementById('nav-ads');
+  const navBiz=document.getElementById('nav-biz');
+  if(navAds)navAds.className=S.page==='ads'?'on':'';
+  if(navBiz)navBiz.className=S.page==='business'?'on':'';
+  
   destroyCharts();const allBrands=getAllBD();
   if(!allBrands.length){document.getElementById('app').innerHTML='<div class="empty">No data found.</div>';return;}
   const bds=getFiltBD();const rm=getRankMap();
@@ -525,18 +613,25 @@ function render(){
   // SECONDARY: Search terms for B/G/C + terms tab
   const allTerms=processTerms(bds,rm);
   const typeSplits=getAsinTypeSplits(bds);
-  // B/G/C from brand_bgc (pre-computed)
-  const typeSpend={brand:0,generic:0,comp:0};
-  bds.forEach(bd=>{const bgc=bd.brand_bgc||{};typeSpend.brand+=bgc.brand||0;typeSpend.generic+=bgc.generic||0;typeSpend.comp+=bgc.comp||0;});
-  // Apply search term filters
-  let terms=filterObj(allTerms,S.obj);terms=filterType(terms,S.termType);
-  if(S.search){const q=S.search.toLowerCase();terms=terms.filter(x=>x.keyword.toLowerCase().includes(q)||x.campaignList.join(' ').toLowerCase().includes(q));}
-  if(S.asinFilter&&S.asinFilter.length>=3){const af=S.asinFilter.toUpperCase();const ma=allAsins.filter(a=>a.asin.toUpperCase().includes(af)||(a.sku&&a.sku.toUpperCase().includes(af)));if(ma.length){const ac=new Set();ma.forEach(a=>{getAsinCampaigns(bds,a.asin).forEach(c=>ac.add(c))});terms=terms.filter(x=>x.campaignList.some(c=>ac.has(c)));}}
-  // Filter search terms by category/range — use campaigns of filtered ASINs
+  
+  // Step 1: Filter search terms by category/range — ASIN→Campaign→SearchTerm chain
+  let catRangeTerms=allTerms;
   if((S.catFilter&&S.catFilter!=='all')||(S.rangeFilter&&S.rangeFilter!=='all')){
     const filtCamps=new Set();allAsins.forEach(a=>{getAsinCampaigns(bds,a.asin).forEach(c=>filtCamps.add(c));});
-    terms=terms.filter(x=>x.campaignList.some(c=>filtCamps.has(c)));
-  }  terms.sort((a,b)=>{let va=a[S.sortCol]??-Infinity,vb=b[S.sortCol]??-Infinity;if(!isFinite(va))va=999999;if(!isFinite(vb))vb=999999;return(va-vb)*S.sortDir;});
+    catRangeTerms=allTerms.filter(x=>x.campaignList.some(c=>filtCamps.has(c)));
+  }
+  // Also filter by ASIN search box
+  if(S.asinFilter&&S.asinFilter.length>=3){const af=S.asinFilter.toUpperCase();const ma=allAsins.filter(a=>a.asin.toUpperCase().includes(af)||(a.sku&&a.sku.toUpperCase().includes(af)));if(ma.length){const ac=new Set();ma.forEach(a=>{getAsinCampaigns(bds,a.asin).forEach(c=>ac.add(c))});catRangeTerms=catRangeTerms.filter(x=>x.campaignList.some(c=>ac.has(c)));}}
+  // Also filter by keyword search
+  if(S.search){const q=S.search.toLowerCase();catRangeTerms=catRangeTerms.filter(x=>x.keyword.toLowerCase().includes(q)||x.campaignList.join(' ').toLowerCase().includes(q));}
+  
+  // Step 2: B/G/C computed from category/range filtered terms (BEFORE obj/type filter)
+  const typeSpend={brand:0,generic:0,comp:0};
+  catRangeTerms.forEach(t=>{typeSpend[t.type]=(typeSpend[t.type]||0)+t.spend;});
+  
+  // Step 3: Apply obj filter (bleeding/scale etc) and type filter (brand/generic/comp)
+  let terms=filterObj(catRangeTerms,S.obj);
+  terms=filterType(terms,S.termType);  terms.sort((a,b)=>{let va=a[S.sortCol]??-Infinity,vb=b[S.sortCol]??-Infinity;if(!isFinite(va))va=999999;if(!isFinite(vb))vb=999999;return(va-vb)*S.sortDir;});
   const T=totals(terms);
   // TOP-LINE KPIs: from daily_totals (has SP+SD+SB with splits)
   const ct=S.campType||'all';
@@ -584,14 +679,20 @@ function render(){
   const bleed=allTerms.filter(x=>(isFinite(x.acos)&&x.acos>90&&x.spend>500)||(!isFinite(x.acos)&&x.spend>500));
   const wastedSpend=bleed.reduce((s,x)=>s+x.spend,0);
   const hasTypeFilter=isBGCFilter||S.obj!=='all'||S.search||S.asinFilter;
-  // WoW (last 7 vs prev 7 from search terms)
-  const now=new Date();const d7=new Date(now);d7.setDate(d7.getDate()-7);const s7=d7.toISOString().slice(0,10);
-  const d14=new Date(now);d14.setDate(d14.getDate()-14);const s14=d14.toISOString().slice(0,10);
+  // WoW: use last 7 days of data and prev 7 days (relative to data, not today)
+  // Find the latest date in the data
+  let maxDate='';
+  allTerms.forEach(x=>{Object.keys(x.days||{}).forEach(d=>{if(d>maxDate)maxDate=d;});});
+  if(!maxDate){bds.forEach(bd=>{Object.keys(bd.daily_totals||{}).forEach(d=>{if(d>maxDate)maxDate=d;});});}
+  const endDt=maxDate?new Date(maxDate+'T00:00:00'):new Date();
+  const d7=new Date(endDt);d7.setDate(d7.getDate()-7);const s7=d7.toISOString().slice(0,10);
+  const d14=new Date(endDt);d14.setDate(d14.getDate()-14);const s14=d14.toISOString().slice(0,10);
+  const sEnd=endDt.toISOString().slice(0,10);
   const twType={brand:0,generic:0,comp:0},pwType={brand:0,generic:0,comp:0};
-  allTerms.forEach(x=>{const d=x.days||{};Object.entries(d).forEach(([dt,v])=>{if(dt>=s7){twType[x.type]=(twType[x.type]||0)+(v.spend||0);}else if(dt>=s14&&dt<s7){pwType[x.type]=(pwType[x.type]||0)+(v.spend||0);}});});
+  allTerms.forEach(x=>{const d=x.days||{};Object.entries(d).forEach(([dt,v])=>{if(dt>s7&&dt<=sEnd){twType[x.type]=(twType[x.type]||0)+(v.spend||0);}else if(dt>s14&&dt<=s7){pwType[x.type]=(pwType[x.type]||0)+(v.spend||0);}});});
   // Top movers
   const thisWeek=[],prevWeek=[];
-  allTerms.forEach(x=>{let tw=0,pw=0;Object.entries(x.days||{}).forEach(([dt,v])=>{if(dt>=s7)tw+=v.spend||0;else if(dt>=s14&&dt<s7)pw+=v.spend||0;});if(tw>0)thisWeek.push({keyword:x.keyword,spend:tw});if(pw>0)prevWeek.push({keyword:x.keyword,spend:pw});});
+  allTerms.forEach(x=>{let tw=0,pw=0;Object.entries(x.days||{}).forEach(([dt,v])=>{if(dt>s7&&dt<=sEnd)tw+=v.spend||0;else if(dt>s14&&dt<=s7)pw+=v.spend||0;});if(tw>0)thisWeek.push({keyword:x.keyword,spend:tw});if(pw>0)prevWeek.push({keyword:x.keyword,spend:pw});});
   const fl=S.obj!=='all'||S.termType!=='all'||S.search||S.asinFilter;
   const brandNames=allBrands.map(d=>d.brand);
 
@@ -603,7 +704,7 @@ function render(){
 
   let o='';
   // Header
-  o+=`<div class="hdr"><div class="hdr-row"><div style="width:34px;height:34px;border-radius:50%;border:2px solid #00e5ff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#00e5ff;font-family:monospace">J</div><div><h1 style="color:#00e5ff;letter-spacing:0.15em">J.A.R.V.I.S</h1><div class="sub">${getBrandLabel()} • ${allAsins.length} ASINs • ${allTerms.length.toLocaleString()} search terms</div></div><div style="margin-left:auto;text-align:right"><div style="font-size:9px;color:var(--dim)">Data updated till</div><div style="font-size:11px;font-weight:600;color:var(--green);font-family:var(--mono)">${fmtDisplay(getLatestDate())}</div></div></div></div>`;
+  o+=`<div class="hdr"><div class="hdr-row"><div style="width:34px;height:34px;border-radius:50%;border:2px solid #00e5ff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#00e5ff;font-family:monospace">J</div><div><h1 style="color:#00e5ff;letter-spacing:0.15em">J.A.R.V.I.S</h1><div class="sub">${getBrandLabel()} • ${allAsins.length} ASINs • ${allTerms.length.toLocaleString()} search terms</div></div><div style="margin-left:auto;display:flex;align-items:center;gap:12px"><button onclick="openJarvisChat()" style="background:linear-gradient(135deg,#00e5ff,#7c3aed);border:none;color:#fff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;animation:glow 2s infinite alternate"><span style="font-size:14px">🔮</span> Ask JARVIS</button><button onclick="runJarvisAnalysis()" style="background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.3);color:#00e5ff;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px"><span style="font-size:14px">⚡</span> Quick Analysis</button><div style="text-align:right"><div style="font-size:9px;color:var(--dim)">Data updated till</div><div style="font-size:11px;font-weight:600;color:var(--green);font-family:var(--mono)">${fmtDisplay(getLatestDate())}</div></div></div></div></div>`;
   // Controls
   o+=`<div class="ctrl">`;
   o+=`<label>Brand:</label><button class="fbtn ${isBrandAll()?'on':''}" onclick="setBrand('ALL')">All</button>`;
@@ -641,15 +742,17 @@ function render(){
   if(hasFilters){o+=`<div class="sep"></div><button class="fbtn" onclick="S.catFilter='all';S.rangeFilter='all';S.campFilter='';S.campType='all';render()" style="color:var(--red);border-color:var(--red);font-size:9px;padding:3px 8px">✕ Clear All</button>`;}
   o+=`</div>`;
 
-  // View tabs
+  // View tabs (only for ads page)
+  if(S.page!=='business'){
   o+=`<div class="vtabs">`;
   [{id:'overview',l:'Overview'},{id:'insights',l:'Insights & Trends'},{id:'terms',l:'Search Terms'},{id:'campaigns',l:'Campaigns'}].forEach(v=>{
     o+=`<div class="vtab ${S.tab===v.id?'on':''}" onclick="setTab('${v.id}')">${v.l}</div>`;
   });
   o+=`</div>`;
+  }
 
   // Brand cards (on overview only) — from daily_totals per brand
-  if(S.tab==='overview'&&isBrandAll()&&allBrands.length>1){
+  if(S.page!=='business'&&S.tab==='overview'&&isBrandAll()&&allBrands.length>1){
     o+=`<div style="padding-top:10px"></div><div class="brand-cards">`;
     allBrands.forEach(bd=>{
       const fdt=filterDailyTotals(bd.daily_totals||{});
@@ -661,17 +764,363 @@ function render(){
         else{bSpend+=v.spend||0;bSales+=v.sales||0;}
       });
       const bAcos=bSales>0?(bSpend/bSales*100):0;
-      o+=`<div class="brand-card" onclick="setBrand('${bd.brand}')"><div class="bc-name">${bd.brand}</div><div class="bc-row"><span class="bc-label">Spend</span><span class="bc-val" style="color:var(--amber)">${fmt(bSpend)}</span></div><div class="bc-row"><span class="bc-label">Sales</span><span class="bc-val" style="color:var(--green)">${fmt(bSales)}</span></div><div class="bc-row"><span class="bc-label">ACOS</span><span class="bc-val" style="color:${acC(bAcos)}">${pct(bAcos)}</span></div></div>`;
+      const bSalesData=getBrandSales(bd.brand);
+      let bNet=0,bDisc=0,bTacos=0;
+      if(bSalesData){
+        const dateFiltered=S.datePeriod!=='all'&&S.dateStart&&S.dateEnd;
+        Object.entries(bSalesData.daily||{}).forEach(([dt,v])=>{
+          if(dateFiltered&&(dt<S.dateStart||dt>S.dateEnd))return;
+          bNet+=v.net||0;
+        });
+        bTacos=bNet>0?(bSpend/bNet*100):0;
+        // Get disc from monthly
+        const mVals=Object.values(bSalesData.monthly||{});
+        const tMrp=mVals.reduce((s,v)=>s+v.mrp,0);const tGross=mVals.reduce((s,v)=>s+v.gross,0);
+        bDisc=tMrp>0?((1-tGross/tMrp)*100):0;
+      }
+      o+=`<div class="brand-card" onclick="setBrand('${bd.brand}')"><div class="bc-name">${bd.brand}</div>`;
+      o+=`<div class="bc-row"><span class="bc-label">Net Sales</span><span class="bc-val" style="color:var(--green)">${bNet>0?fmt(bNet):'—'}</span></div>`;
+      o+=`<div class="bc-row"><span class="bc-label">Ad Spend</span><span class="bc-val" style="color:var(--amber)">${fmt(bSpend)}</span></div>`;
+      o+=`<div class="bc-row"><span class="bc-label">TACOS</span><span class="bc-val" style="color:${bTacos<=15?'var(--green)':bTacos<=25?'var(--amber)':'var(--red)'}">${bTacos>0?pct(bTacos):'—'}</span></div>`;
+      o+=`<div class="bc-row"><span class="bc-label">ACOS</span><span class="bc-val" style="color:${acC(bAcos)}">${pct(bAcos)}</span></div>`;
+      o+=`<div class="bc-row"><span class="bc-label">Disc%</span><span class="bc-val" style="color:var(--cyan)">${bDisc>0?bDisc.toFixed(1)+'%':'—'}</span></div>`;
+      o+=`</div>`;
     });
     o+=`</div>`;
   }
 
   const spendSalesPct=topSales>0?(topSpend/topSales*100):0;
+  const salesM=getSalesMetrics(bds);
+  const hasSales=salesM&&salesM.net>0;
+  const tacos=hasSales?(topSpend/salesM.net*100):0;
+  const organicSales=hasSales?Math.max(0,salesM.net-topSales):0;
+  const organicPct=hasSales&&salesM.net>0?(organicSales/salesM.net*100):0;
   const totalTypeSpend=typeSpend.brand+typeSpend.generic+typeSpend.comp;
   const brandPct=totalTypeSpend>0?((typeSpend.brand/totalTypeSpend)*100).toFixed(0)+'%':'';
   const genPct=totalTypeSpend>0?((typeSpend.generic/totalTypeSpend)*100).toFixed(0)+'%':'';
   const compPct=totalTypeSpend>0?((typeSpend.comp/totalTypeSpend)*100).toFixed(0)+'%':'';
-  // Primary stats — from product data
+
+  if(S.page==='business'){
+    // ═══════════════════════════════════════
+    // BUSINESS PAGE — full rebuild
+    // ═══════════════════════════════════════
+    if(!hasSales){
+      o+=`<div class="sec" style="padding:40px;text-align:center;color:var(--muted)"><h3 style="margin-bottom:8px">No sales data loaded</h3><p style="font-size:12px">Run: <code style="background:var(--card2);padding:2px 6px;border-radius:4px">python sales_processor.py</code></p></div>`;
+    } else {
+      // Date helpers for Period A (main) and Period B (comparison)
+      const dateFiltered=S.datePeriod!=='all'&&S.dateStart&&S.dateEnd;
+      const{start:dfStart,end:dfEnd}=dateFiltered?getDateRange():{start:'2000-01-01',end:'9999-12-31'};
+      const hasComp=S.compStart&&S.compEnd;
+      const numDaysA=dateFiltered?Math.max(1,Math.round((new Date(dfEnd)-new Date(dfStart))/(86400000))+1):1;
+      const numDaysB=hasComp?Math.max(1,Math.round((new Date(S.compEnd)-new Date(S.compStart))/(86400000))+1):1;
+      
+      // ═══ COMPARISON DATE PICKER ═══
+      const compLabel=hasComp?`${fmtDisplay(S.compStart)} – ${fmtDisplay(S.compEnd)}`:'Select comparison period';
+      o+=`<div class="ctrl" style="border-bottom:1px solid var(--border);gap:10px">`;
+      o+=`<label style="color:var(--purple);font-weight:700">Compare:</label>`;
+      o+=`<button class="dp-range-btn" onclick="openDatePicker('b')" style="border-color:${hasComp?'var(--purple)':'var(--border)'};${hasComp?'color:var(--purple)':''}"><span>📅 ${compLabel}</span><span class="arrow">▼</span></button>`;
+      if(hasComp){
+        o+=`<span style="font-size:10px;color:var(--muted)">${numDaysB}d</span>`;
+        o+=`<button class="fbtn" onclick="S.compStart='';S.compEnd='';render()" style="color:var(--red);border-color:var(--red);font-size:9px">✕ Clear</button>`;
+      }
+      o+=`</div>`;
+      
+      // ═══ SUMMARY CARDS ═══
+      const tSalesM=salesM;
+      const bTacos=tSalesM.net>0?(topSpend/tSalesM.net*100):0;
+      const bOrganic=Math.max(0,tSalesM.net-topSales);
+      const bOrgPct=tSalesM.net>0?(bOrganic/tSalesM.net*100):0;
+      const drr=dateFiltered?(tSalesM.net/numDaysA):0;
+      const drrUnits=dateFiltered?(tSalesM.units/numDaysA):0;
+      const asp=tSalesM.units>0?(tSalesM.net/tSalesM.units):0;
+      
+      o+=`<div class="sts" style="grid-template-columns:repeat(8,1fr)">`;
+      o+=`<div class="st"><div class="lb" style="color:var(--green)">NET REVENUE</div><div class="vl" style="color:var(--green)">${fmt(tSalesM.net)}</div></div>`;
+      o+=`<div class="st"><div class="lb" style="color:var(--amber)">AD SPEND</div><div class="vl" style="color:var(--amber)">${fmt(topSpend)}</div></div>`;
+      o+=`<div class="st"><div class="lb" style="color:${bTacos<=15?'var(--green)':'var(--red)'}">NET TACOS</div><div class="vl" style="color:${bTacos<=15?'var(--green)':bTacos<=25?'var(--amber)':'var(--red)'}"><b>${pct(bTacos)}</b></div></div>`;
+      o+=`<div class="st"><div class="lb" style="color:var(--cyan)">DISC %</div><div class="vl" style="color:var(--cyan)">${tSalesM.disc_pct.toFixed(1)}%</div></div>`;
+      o+=`<div class="st"><div class="lb" style="color:var(--green2)">ORGANIC</div><div class="vl" style="color:var(--green2)">${fmt(bOrganic)}</div><div class="ch" style="color:var(--dim)">${bOrgPct.toFixed(0)}% of net</div></div>`;
+      o+=`<div class="st"><div class="lb">ASP</div><div class="vl">₹${asp>0?Math.round(asp).toLocaleString('en-IN'):'—'}</div></div>`;
+      o+=`<div class="st"><div class="lb">DRR REV</div><div class="vl">${dateFiltered?fmt(drr):'—'}</div><div class="ch" style="color:var(--dim)">${dateFiltered?numDaysA+'d period':'Select dates'}</div></div>`;
+      o+=`<div class="st"><div class="lb">DRR UNITS</div><div class="vl">${dateFiltered?fN(Math.round(drrUnits)):'—'}</div></div>`;
+      o+=`</div>`;
+
+      // ═══ MONTHLY P&L TABLE ═══
+      o+=`<div class="sec"><div class="sec-title" style="display:flex;align-items:center;gap:8px">Monthly P&L — ${getBrandLabel()}</div>`;
+      o+=`<div class="tbl-wrap" style="max-height:520px"><table class="tbl"><thead><tr>`;
+      o+=`<th>MONTH</th><th class="r">NET SALES</th><th class="c">MoM</th><th class="r">MRP</th><th class="c">DISC%</th>`;
+      o+=`<th class="r" style="color:var(--amber)">AD SPEND</th><th class="r" style="color:var(--blue)">AD SALES</th><th class="c" style="color:var(--amber)">TACOS</th><th class="c">ACOS</th>`;
+      o+=`<th class="r" style="color:var(--green2)">ORGANIC</th><th class="c" style="color:var(--green2)">ORG%</th><th class="r">UNITS</th><th class="r">ASP</th><th class="r">DRR ₹</th><th class="r">DRR U</th>`;
+      o+=`</tr></thead><tbody>`;
+      const months=Object.keys(salesM.monthly).sort();
+      const adsMonthly={};
+      bds.forEach(bd=>{Object.entries(bd.daily_totals||{}).forEach(([d,v])=>{
+        if(dateFiltered&&(d<dfStart||d>dfEnd))return;
+        const m=d.slice(0,7);if(!adsMonthly[m])adsMonthly[m]={spend:0,sales:0};
+        adsMonthly[m].spend+=v.spend||0;adsMonthly[m].sales+=v.sales||0;
+      });});
+      Object.keys(salesM.monthly).forEach(m=>{if(!adsMonthly[m])adsMonthly[m]={spend:0,sales:0};});
+      let tNet=0,tMrp=0,tGross=0,tAdSpend=0,tAdSales=0,tUnits=0,tDays=0;
+      // Count actual sales days per month from daily data
+      const monthDayCounts={};
+      const brandNamesM=bds.map(d=>d.brand);
+      brandNamesM.forEach(bn=>{
+        const sbd=S.sales.brands[bn];if(!sbd)return;
+        Object.keys(sbd.daily||{}).forEach(dt=>{
+          if(dateFiltered&&(dt<dfStart||dt>dfEnd))return;
+          const mm=dt.slice(0,7);
+          if(!monthDayCounts[mm])monthDayCounts[mm]=new Set();
+          monthDayCounts[mm].add(dt);
+        });
+      });
+      const allMonths=[...new Set([...months,...Object.keys(adsMonthly)])].sort();
+      allMonths.forEach((m,idx)=>{
+        const sm=salesM.monthly[m]||{net:0,ordered:0,mrp:0,gross:0,units:0};
+        const am=adsMonthly[m]||{spend:0,sales:0};
+        // Skip empty months when date filtered (no sales AND no ads)
+        if(dateFiltered&&sm.net<=0&&am.spend<=0)return;
+        const disc=sm.mrp>0?((1-sm.gross/sm.mrp)*100):0;
+        const tacos_m=sm.net>0?(am.spend/sm.net*100):0;
+        const acos_m=am.sales>0?(am.spend/am.sales*100):0;
+        const organic=Math.max(0,sm.net-am.sales);
+        const orgPct=sm.net>0?(organic/sm.net*100):0;
+        const mAsp=sm.units>0?(sm.net/sm.units):0;
+        const mDays=monthDayCounts[m]?monthDayCounts[m].size:1;
+        const mDrrSales=sm.net/mDays;
+        const mDrrUnits=sm.units/mDays;
+        tNet+=sm.net;tMrp+=sm.mrp;tGross+=sm.gross;tAdSpend+=am.spend;tAdSales+=am.sales;tUnits+=sm.units;tDays+=mDays;
+        let momHtml='';
+        if(idx>0){const pm=allMonths[idx-1];const psm=salesM.monthly[pm]||{net:0};if(psm.net>0){const ch=((sm.net-psm.net)/psm.net*100);momHtml=`<span style="font-weight:600;color:${ch>=0?'var(--green)':'var(--red)'}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(0)}%</span>`;}}
+        const mParts=m.split('-');const mo=parseInt(mParts[1]);
+        const mLabel=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo]+" '"+mParts[0].slice(2);
+        o+=`<tr><td style="font-weight:600">${mLabel}</td>`;
+        o+=`<td class="r" style="color:var(--green);font-weight:600">${fmt(sm.net)}</td>`;
+        o+=`<td class="c" style="font-size:10px">${momHtml||'—'}</td>`;
+        o+=`<td class="r" style="color:var(--dim)">${fmt(sm.mrp)}</td>`;
+        o+=`<td class="c" style="color:var(--cyan)">${disc.toFixed(1)}%</td>`;
+        o+=`<td class="r" style="color:var(--amber)">${am.spend>0?fmt(am.spend):'—'}</td>`;
+        o+=`<td class="r" style="color:var(--blue)">${am.sales>0?fmt(am.sales):'—'}</td>`;
+        o+=`<td class="c"><b style="color:${tacos_m<=12?'var(--green)':tacos_m<=18?'var(--amber)':'var(--red)'}">${tacos_m>0?tacos_m.toFixed(1)+'%':'—'}</b></td>`;
+        o+=`<td class="c" style="color:${acC(acos_m)}">${acos_m>0?acos_m.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--green2)">${fmt(organic)}</td>`;
+        o+=`<td class="c" style="color:var(--green2)">${orgPct>0?orgPct.toFixed(0)+'%':'—'}</td>`;
+        o+=`<td class="r">${fN(sm.units)}</td>`;
+        o+=`<td class="r">₹${mAsp>0?Math.round(mAsp):0}</td>`;
+        o+=`<td class="r">${fmt(mDrrSales)}</td>`;
+        o+=`<td class="r">${fN(Math.round(mDrrUnits))}</td></tr>`;
+      });
+      // Total
+      const tDisc=tMrp>0?((1-tGross/tMrp)*100):0;const tTacos=tNet>0?(tAdSpend/tNet*100):0;const tAcos=tAdSales>0?(tAdSpend/tAdSales*100):0;
+      const tOrganic=Math.max(0,tNet-tAdSales);const tOrgPct=tNet>0?(tOrganic/tNet*100):0;const tAsp=tUnits>0?(tNet/tUnits):0;
+      o+=`<tr style="background:rgba(167,139,250,.06);font-weight:700;border-top:2px solid var(--purple)">`;
+      o+=`<td style="color:var(--purple)">TOTAL</td><td class="r" style="color:var(--green)">${fmt(tNet)}</td><td class="c">—</td>`;
+      o+=`<td class="r" style="color:var(--dim)">${fmt(tMrp)}</td><td class="c" style="color:var(--cyan)">${tDisc.toFixed(1)}%</td>`;
+      o+=`<td class="r" style="color:var(--amber)">${fmt(tAdSpend)}</td><td class="r" style="color:var(--blue)">${fmt(tAdSales)}</td>`;
+      o+=`<td class="c"><b style="color:${tTacos<=12?'var(--green)':tTacos<=18?'var(--amber)':'var(--red)'}">${tTacos.toFixed(1)}%</b></td>`;
+      o+=`<td class="c" style="color:${acC(tAcos)}">${tAcos.toFixed(1)}%</td>`;
+      o+=`<td class="r" style="color:var(--green2)">${fmt(tOrganic)}</td><td class="c" style="color:var(--green2)">${tOrgPct.toFixed(0)}%</td>`;
+      o+=`<td class="r">${fN(tUnits)}</td><td class="r">₹${Math.round(tAsp)}</td><td class="r">${tDays>0?fmt(tNet/tDays):'—'}</td><td class="r">${tDays>0?fN(Math.round(tUnits/tDays)):'—'}</td></tr></tbody></table></div></div>`;
+
+      // ═══ BRAND SPLIT ═══
+      if(isBrandAll()&&bds.length>1){
+        o+=`<div class="sec"><div class="sec-title">Brand Split — Latest Month</div>`;
+        const latestMonth=allMonths[allMonths.length-1]||'';
+        if(latestMonth){
+          o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr>`;
+          o+=`<th>BRAND</th><th class="r">NET SALES</th><th class="c">SHARE</th><th class="c">DISC%</th>`;
+          o+=`<th class="r" style="color:var(--amber)">AD SPEND</th><th class="c">TACOS</th><th class="c">ACOS</th>`;
+          o+=`<th class="r" style="color:var(--green2)">ORGANIC</th><th class="c">ORG%</th></tr></thead><tbody>`;
+          const brandColors={'Bare Anatomy':'var(--purple)','Chemist at Play':'var(--cyan)','Sunscoop':'var(--amber)'};
+          bds.forEach(bd=>{
+            const sbd=S.sales.brands[bd.brand];if(!sbd)return;
+            let bNet=0,bMrp=0,bGross=0;
+            Object.entries(sbd.daily||{}).forEach(([dt,v])=>{if(dt.slice(0,7)!==latestMonth)return;bNet+=v.net||0;bMrp+=v.mrp||0;bGross+=v.gross||0;});
+            if(bNet<=0)return;
+            const bDisc=bMrp>0?((1-bGross/bMrp)*100):0;
+            let bAdSpend=0,bAdSales=0;
+            Object.entries(bd.daily_totals||{}).forEach(([d,v])=>{if(d.slice(0,7)!==latestMonth)return;bAdSpend+=v.spend||0;bAdSales+=v.sales||0;});
+            const bTacosM=bNet>0?(bAdSpend/bNet*100):0;const bAcosM=bAdSales>0?(bAdSpend/bAdSales*100):0;
+            const bOrg=Math.max(0,bNet-bAdSales);const bOrgP=bNet>0?(bOrg/bNet*100):0;
+            const share=tSalesM.monthly[latestMonth]?.net>0?((bNet/(tSalesM.monthly[latestMonth].net))*100):0;
+            o+=`<tr><td style="font-weight:600;color:${brandColors[bd.brand]||'var(--text)'}">${bd.brand}</td>`;
+            o+=`<td class="r" style="color:var(--green)">${fmt(bNet)}</td><td class="c">${share.toFixed(0)}%</td>`;
+            o+=`<td class="c" style="color:var(--cyan)">${bDisc.toFixed(1)}%</td>`;
+            o+=`<td class="r" style="color:var(--amber)">${bAdSpend>0?fmt(bAdSpend):'—'}</td>`;
+            o+=`<td class="c" style="color:${bTacosM<=12?'var(--green)':bTacosM<=18?'var(--amber)':'var(--red)'}"><b>${bTacosM>0?bTacosM.toFixed(1)+'%':'—'}</b></td>`;
+            o+=`<td class="c" style="color:${acC(bAcosM)}">${bAcosM>0?bAcosM.toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="r" style="color:var(--green2)">${fmt(bOrg)}</td>`;
+            o+=`<td class="c" style="color:var(--green2)">${bOrgP.toFixed(0)}%</td></tr>`;
+          });
+          o+=`</tbody></table></div></div>`;
+        }
+      }
+      
+      // ═══ ASIN P&L — ALL ASINs with Sales%, Spend%, ASP, DRR + Comparison ═══
+      const brandNamesB=bds.map(d=>d.brand);
+      const asinRowsB=[];
+      const brandAbbrB={'Bare Anatomy':'BA','Chemist at Play':'CAP','Sunscoop':'SS'};
+      let totalNetA=0,totalSpendA=0;
+      
+      // First pass: collect all ASINs with Period A data
+      brandNamesB.forEach(bn=>{
+        const sbd=S.sales.brands[bn];if(!sbd)return;
+        (sbd.asins||[]).forEach(sa=>{
+          const info=getAsinInfo(sa.asin);
+          const cat=info.c||sa.category||'';
+          const range=info.r||'';
+          if(S.catFilter&&S.catFilter!=='all'&&cat!==S.catFilter)return;
+          if(S.rangeFilter&&S.rangeFilter!=='all'&&range!==S.rangeFilter)return;
+          
+          // Period A: date-filtered sales
+          let net=0,mrp=0,gross=0,units=0;
+          if(dateFiltered&&sa.daily&&Object.keys(sa.daily).length){
+            Object.entries(sa.daily).forEach(([dt,v])=>{
+              if(dt>=dfStart&&dt<=dfEnd){net+=v.net||0;mrp+=v.mrp||0;gross+=v.gross||0;units+=v.units||0;}
+            });
+          } else if(!dateFiltered) {
+            net=sa.net||0;mrp=sa.mrp||0;gross=sa.gross||0;units=sa.units||0;
+          } else {
+            // dateFiltered but no daily data — use totals as fallback
+            net=sa.net||0;mrp=sa.mrp||0;gross=sa.gross||0;units=sa.units||0;
+          }
+          if(net<=0&&units<=0)return;
+          
+          // Period B: comparison
+          let netB=0,mrpB=0,grossB=0,unitsB=0;
+          if(hasComp&&sa.daily&&Object.keys(sa.daily).length){
+            Object.entries(sa.daily).forEach(([dt,v])=>{
+              if(dt>=S.compStart&&dt<=S.compEnd){netB+=v.net||0;mrpB+=v.mrp||0;grossB+=v.gross||0;unitsB+=v.units||0;}
+            });
+          }
+          
+          let disc=(mrp>0&&gross>0)?((1-gross/mrp)*100):0;
+          const adA=allAsins.find(a=>a.asin===sa.asin);
+          const adSpend=adA?adA.spend:0;
+          const adSales=adA?adA.sales:0;
+          
+          totalNetA+=net;totalSpendA+=adSpend;
+          
+          asinRowsB.push({
+            asin:sa.asin,sku:info.s||sa.sku||'',title:info.n||sa.title||'',
+            category:cat,range:range,brand:bn,brandShort:brandAbbrB[bn]||bn,
+            net,mrp,gross,units,disc,adSpend,adSales,
+            asp:units>0?(net/units):0,
+            drr:dateFiltered?(units/numDaysA):0,
+            drrRev:dateFiltered?(net/numDaysA):0,
+            // Period B
+            netB,unitsB,discB:(mrpB>0&&grossB>0)?((1-grossB/mrpB)*100):0,
+            aspB:unitsB>0?(netB/unitsB):0,
+            drrB:hasComp?(unitsB/numDaysB):0,
+          });
+        });
+      });
+      
+      // Sort
+      asinRowsB.sort((a,b)=>{
+        let va=a[S.bizSort]??0,vb=b[S.bizSort]??0;
+        return(va-vb)*S.bizDir;
+      });
+      
+      // Compute Sales% and Spend%
+      asinRowsB.forEach(a=>{
+        a.salesPct=totalNetA>0?((a.net/totalNetA)*100):0;
+        a.spendPct=totalSpendA>0?((a.adSpend/totalSpendA)*100):0;
+      });
+      
+      const filterLabel=[];
+      if(S.catFilter&&S.catFilter!=='all')filterLabel.push(S.catFilter);
+      if(S.rangeFilter&&S.rangeFilter!=='all')filterLabel.push(S.rangeFilter);
+      const fLabel=filterLabel.length?` — ${filterLabel.join(' / ')}`:'';
+      const periodLabel=dateFiltered?` (${dfStart} → ${dfEnd})`:'';
+      
+      o+=`<div class="sec"><div class="sec-title">ASIN P&L${fLabel}${periodLabel} <span style="font-size:9px;color:var(--dim);font-weight:400">${asinRowsB.length} ASINs</span></div>`;
+      o+=`<div class="tbl-wrap" style="max-height:none;overflow:auto"><table class="tbl"><thead><tr>`;
+      
+      // Column headers — sortable
+      const bizCols=[
+        {k:'',l:'',c:''},
+        {k:'title',l:'PRODUCT',c:''},
+        {k:'brandShort',l:'BR',c:'c'},
+        {k:'category',l:'CAT',c:''},
+        {k:'net',l:'NET SALES',c:'r'},
+        {k:'salesPct',l:'SALES%',c:'c'},
+        {k:'disc',l:'DISC%',c:'c'},
+        {k:'adSpend',l:'AD SPEND',c:'r'},
+        {k:'spendPct',l:'SPEND%',c:'c'},
+        {k:'adSales',l:'AD SALES',c:'r'},
+      ];
+      // Add TACOS/ACOS/Organic dynamically
+      const dynCols=[
+        {k:'tacos',l:'TACOS',c:'c'},
+        {k:'acos',l:'ACOS',c:'c'},
+        {k:'organic',l:'ORGANIC',c:'r'},
+        {k:'orgPct',l:'ORG%',c:'c'},
+        {k:'units',l:'UNITS',c:'r'},
+        {k:'asp',l:'ASP',c:'r'},
+        {k:'drr',l:'DRR U',c:'r'},
+        {k:'drrRev',l:'DRR ₹',c:'r'},
+      ];
+      const allCols=[...bizCols,...dynCols];
+      allCols.forEach(c=>{
+        if(!c.k){o+=`<th></th>`;return;}
+        const arrow=S.bizSort===c.k?(S.bizDir>0?' ▲':' ▼'):'';
+        o+=`<th class="${c.c}" style="cursor:pointer" onclick="S.bizSort='${c.k}';S.bizDir=S.bizSort==='${c.k}'?S.bizDir*-1:-1;render()">${c.l}${arrow}</th>`;
+      });
+      // Comparison columns
+      if(hasComp){
+        o+=`<th class="r" style="color:var(--purple)">B:NET</th><th class="c" style="color:var(--purple)">Δ%</th>`;
+        o+=`<th class="r" style="color:var(--purple)">B:UNITS</th><th class="c" style="color:var(--purple)">Δ%</th>`;
+        o+=`<th class="c" style="color:var(--purple)">B:ASP</th><th class="c" style="color:var(--purple)">Δ%</th>`;
+        o+=`<th class="c" style="color:var(--purple)">B:DRR</th><th class="c" style="color:var(--purple)">Δ%</th>`;
+      }
+      o+=`</tr></thead><tbody>`;
+      
+      asinRowsB.forEach((a,i)=>{
+        const tacos_a=a.net>0?(a.adSpend/a.net*100):0;
+        const acos_a=a.adSales>0?(a.adSpend/a.adSales*100):0;
+        const organic_a=Math.max(0,a.net-a.adSales);
+        const orgPct_a=a.net>0?(organic_a/a.net*100):0;
+        const brandCol={'BA':'var(--purple)','CAP':'var(--cyan)','SS':'var(--amber)'}[a.brandShort]||'var(--muted)';
+        
+        o+=`<tr>`;
+        o+=`<td><img src="https://m.media-amazon.com/images/P/${a.asin.toUpperCase()}._SL32_.jpg" onerror="this.style.display='none'" style="width:24px;height:24px;border-radius:3px;background:var(--card2)"></td>`;
+        o+=`<td><div style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}"><a href="https://www.amazon.in/dp/${a.asin}" target="_blank" style="color:var(--text);text-decoration:none">${a.title||a.sku||a.asin}</a></div></td>`;
+        o+=`<td class="c"><span style="font-size:9px;font-weight:600;color:${brandCol}">${a.brandShort}</span></td>`;
+        o+=`<td style="font-size:9px;color:var(--muted)">${a.category}</td>`;
+        o+=`<td class="r" style="color:var(--green);font-weight:500">${fmt(a.net)}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--muted)">${a.salesPct.toFixed(1)}%</td>`;
+        o+=`<td class="c" style="color:var(--cyan)">${a.disc>0?a.disc.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--amber)">${a.adSpend>0?fmt(a.adSpend):'—'}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--muted)">${a.spendPct>0?a.spendPct.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--blue)">${a.adSales>0?fmt(a.adSales):'—'}</td>`;
+        o+=`<td class="c"><span style="font-weight:600;color:${tacos_a<=12?'var(--green)':tacos_a<=18?'var(--amber)':'var(--red)'}">${tacos_a>0?tacos_a.toFixed(1)+'%':'—'}</span></td>`;
+        o+=`<td class="c" style="color:${acC(acos_a)}">${acos_a>0?acos_a.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--green2)">${fmt(organic_a)}</td>`;
+        o+=`<td class="c" style="color:var(--green2)">${orgPct_a>0?orgPct_a.toFixed(0)+'%':'—'}</td>`;
+        o+=`<td class="r">${fN(a.units)}</td>`;
+        o+=`<td class="r">₹${a.asp>0?Math.round(a.asp):0}</td>`;
+        o+=`<td class="r">${a.drr>0?Math.round(a.drr):dateFiltered?'0':'—'}</td>`;
+        o+=`<td class="r">${a.drrRev>0?fmt(a.drrRev):dateFiltered?'₹0':'—'}</td>`;
+        
+        // Comparison columns
+        if(hasComp){
+          const dNet=a.netB>0&&a.net>0?((a.net-a.netB)/a.netB*100):null;
+          const dUnits=a.unitsB>0&&a.units>0?((a.units-a.unitsB)/a.unitsB*100):null;
+          const dAsp=a.aspB>0&&a.asp>0?((a.asp-a.aspB)/a.aspB*100):null;
+          const dDrr=a.drrB>0&&a.drr>0?((a.drr-a.drrB)/a.drrB*100):null;
+          const deltaHtml=(v)=>v!=null?`<span style="font-weight:600;color:${v>=0?'var(--green)':'var(--red)'}">${v>=0?'▲':'▼'}${Math.abs(v).toFixed(0)}%</span>`:'—';
+          o+=`<td class="r" style="color:var(--muted)">${a.netB>0?fmt(a.netB):'—'}</td><td class="c">${deltaHtml(dNet)}</td>`;
+          o+=`<td class="r" style="color:var(--muted)">${a.unitsB>0?fN(a.unitsB):'—'}</td><td class="c">${deltaHtml(dUnits)}</td>`;
+          o+=`<td class="c" style="color:var(--muted)">${a.aspB>0?'₹'+Math.round(a.aspB):'—'}</td><td class="c">${deltaHtml(dAsp)}</td>`;
+          o+=`<td class="c" style="color:var(--muted)">${a.drrB>0?Math.round(a.drrB):'—'}</td><td class="c">${deltaHtml(dDrr)}</td>`;
+        }
+        o+=`</tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
+    // End business page — skip to DOM update
+  } else {
+  // ═══ ADS INTELLIGENCE PAGE ═══
   o+=`<div class="sts" style="grid-template-columns:repeat(8,1fr)">`;
   o+=`<div class="st"><div class="lb">Spend</div><div class="vl" style="color:var(--amber)">${fmt(topSpend)}</div>${isBGCFilter?`<div class="ch" style="color:var(--dim)">Product: ${fmt(prodSpend)}</div>`:''}</div>`;
   o+=`<div class="st"><div class="lb">Sales</div><div class="vl" style="color:var(--green)">${fmt(topSales)}</div></div>`;
@@ -682,6 +1131,19 @@ function render(){
   o+=`<div class="st"><div class="lb">CAC</div><div class="vl" style="color:var(--purple)">₹${topCac>0?topCac.toFixed(0):'—'}</div></div>`;
   o+=`<div class="st" style="cursor:pointer" onclick="S.tab='terms';S.obj='bleeding';render()" title="Click to see bleeding keywords"><div class="lb">WASTED</div><div class="vl" style="color:var(--red)">${fmt(wastedSpend)}</div><div class="ch" style="color:var(--red)">${bleed.length} kws</div></div>`;
   o+=`</div>`;
+  // Sales KPIs (if sales data loaded)
+  if(hasSales){
+  o+=`<div class="sts" style="grid-template-columns:repeat(8,1fr);padding-top:0;border-top:1px solid var(--border)">`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">NET SALES</div><div class="vl" style="color:var(--green)">${fmt(salesM.net)}</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">TACOS</div><div class="vl" style="color:${tacos<=15?'var(--green)':tacos<=25?'var(--amber)':'var(--red)'}">${pct(tacos)}</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">DISC %</div><div class="vl" style="color:var(--cyan)">${salesM.disc_pct.toFixed(1)}%</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">ORGANIC</div><div class="vl" style="color:var(--green2)">${fmt(organicSales)}</div><div class="ch" style="color:var(--dim)">${organicPct.toFixed(0)}% of net</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">MRP SALES</div><div class="vl">${fmt(salesM.mrp)}</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">GROSS</div><div class="vl">${fmt(salesM.gross)}</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">REFUND %</div><div class="vl" style="color:${salesM.refund_pct<=5?'var(--green)':'var(--amber)'}">${salesM.refund_pct.toFixed(1)}%</div></div>`;
+  o+=`<div class="st"><div class="lb" style="color:var(--cyan)">NET UNITS</div><div class="vl">${fN(salesM.units_net)}</div></div>`;
+  o+=`</div>`;
+  }
   // Toggle
   o+=`<div class="more-toggle"><button class="more-btn" onclick="toggleMore()">${S.showMore?'▲ Less':'▼ Units · Clicks · Impressions · CTR · Type Split'}</button></div>`;
   // Secondary stats (collapsible) — product-based
@@ -864,6 +1326,58 @@ function render(){
       o+=`<div class="ins-row"><span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${a.cleanName||a.sku||a.asin}</span><span style="font-family:var(--mono);font-size:10px;color:var(--red)">${isFinite(a.acos)?pct(a.acos):'∞'}</span><span style="font-family:var(--mono);font-size:9px">${fmt(a.spend)}</span></div>`;
     });
     o+=`</div></div>`;
+    
+    // Product breakdown — always show when category/range filtered, right after charts
+    if((S.catFilter&&S.catFilter!=='all')||(S.rangeFilter&&S.rangeFilter!=='all')){
+      // Compute totals and per-ASIN B/G/C
+      let tSpend=0,tSales=0,tUnits=0,tClicks=0,tBrand=0,tGen=0,tComp=0;
+      const asinRows=allAsins.sort((a,b)=>b.spend-a.spend).map(a=>{
+        let aBrand=0,aGen=0,aComp=0;
+        bds.forEach(bd=>{const d=(bd.asin_bgc||{})[a.asin]||{};aBrand+=d.brand||0;aGen+=d.generic||0;aComp+=d.comp||0;});
+        tSpend+=a.spend;tSales+=a.sales;tUnits+=a.units;tClicks+=a.clicks;
+        tBrand+=aBrand;tGen+=aGen;tComp+=aComp;
+        return {...a,aBrand,aGen,aComp,aTotal:aBrand+aGen+aComp};
+      });
+      const tTotal=tBrand+tGen+tComp;
+
+      o+=`<div class="sec" style="margin-top:12px"><div class="sec-title">Product Breakdown — ${S.catFilter!=='all'?S.catFilter:'All'} ${S.rangeFilter!=='all'?'/ '+S.rangeFilter:''} (${asinRows.length} ASINs)</div>`;
+      o+=`<div class="tbl-wrap"><table class="tbl"><thead><tr><th></th><th>PRODUCT</th><th class="r">SPEND</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">UNITS</th><th class="c">CVR</th><th class="r" style="color:var(--amber)">BRAND</th><th class="c" style="color:var(--amber)">B%</th><th class="r" style="color:var(--blue)">GENERIC</th><th class="c" style="color:var(--blue)">G%</th><th class="r" style="color:var(--red)">COMP</th><th class="c" style="color:var(--red)">C%</th><th class="c">SPLIT</th></tr></thead><tbody>`;
+      // Totals row first
+      const tAcos=tSales>0?(tSpend/tSales*100):0;const tCvr=tClicks>0?(tUnits/tClicks*100):0;
+      const tbPct=tTotal>0?((tBrand/tTotal)*100).toFixed(0):0;
+      const tgPct=tTotal>0?((tGen/tTotal)*100).toFixed(0):0;
+      const tcPct=tTotal>0?((tComp/tTotal)*100).toFixed(0):0;
+      o+=`<tr style="font-weight:700;background:var(--card2)"><td></td><td style="font-size:11px">TOTAL</td><td class="r">${fmt(tSpend)}</td><td class="r" style="color:var(--green)">${fmt(tSales)}</td><td class="c"><span style="color:${acC(tAcos)}">${tAcos.toFixed(0)}%</span></td><td class="r">${fN(tUnits)}</td><td class="c">${tCvr.toFixed(1)}%</td><td class="r" style="color:var(--amber)">${fmt(tBrand)}</td><td class="c" style="color:var(--amber)">${tbPct}%</td><td class="r" style="color:var(--blue)">${fmt(tGen)}</td><td class="c" style="color:var(--blue)">${tgPct}%</td><td class="r" style="color:var(--red)">${fmt(tComp)}</td><td class="c" style="color:var(--red)">${tcPct}%</td><td class="c"><div style="display:flex;height:10px;border-radius:4px;overflow:hidden;min-width:80px"><div style="width:${tbPct}%;background:var(--amber)"></div><div style="width:${tgPct}%;background:var(--blue)"></div><div style="width:${tcPct}%;background:var(--red)"></div></div></td></tr>`;
+      // Each ASIN
+      asinRows.forEach(a=>{
+        const acos=isFinite(a.acos)?a.acos.toFixed(0)+'%':(a.spend>0?'∞':'—');
+        const cvr=a.clicks>0?(a.units/a.clicks*100):0;
+        const at=a.aTotal;
+        const bP=at>0?((a.aBrand/at)*100).toFixed(0):0;
+        const gP=at>0?((a.aGen/at)*100).toFixed(0):0;
+        const cP=at>0?((a.aComp/at)*100).toFixed(0):0;
+        // Spend % of total
+        const spPct=tSpend>0?((a.spend/tSpend)*100).toFixed(1):'0';
+        const slPct=tSales>0?((a.sales/tSales)*100).toFixed(1):'0';
+        o+=`<tr>`;
+        o+=`<td><img src="https://m.media-amazon.com/images/P/${a.asin}._SL32_.jpg" onerror="this.style.display='none'" style="width:28px;height:28px;border-radius:3px"></td>`;
+        o+=`<td><div style="font-size:10px;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="https://www.amazon.in/dp/${a.asin}" target="_blank" style="color:var(--blue);text-decoration:none">${a.cleanName||a.sku||a.asin}</a></div><div style="font-size:8px;color:var(--dim)">Spend ${spPct}% · Sales ${slPct}%</div></td>`;
+        o+=`<td class="r">${fmt(a.spend)}</td>`;
+        o+=`<td class="r" style="color:var(--green)">${fmt(a.sales)}</td>`;
+        o+=`<td class="c"><span style="color:${acC(a.acos)}">${acos}</span></td>`;
+        o+=`<td class="r">${fN(a.units)}</td>`;
+        o+=`<td class="c" style="color:${cvr>=10?'var(--green)':'var(--dim)'}">${cvr>0?cvr.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--amber)">${a.aBrand>0?fmt(a.aBrand):''}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--amber)">${bP>0?bP+'%':''}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--blue)">${a.aGen>0?fmt(a.aGen):''}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--blue)">${gP>0?gP+'%':''}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--red)">${a.aComp>0?fmt(a.aComp):''}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--red)">${cP>0?cP+'%':''}</td>`;
+        o+=`<td class="c"><div style="display:flex;height:8px;border-radius:4px;overflow:hidden;min-width:80px"><div style="width:${bP}%;background:var(--amber)"></div><div style="width:${gP}%;background:var(--blue)"></div><div style="width:${cP}%;background:var(--red)"></div></div></td>`;
+        o+=`</tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
+    }
   }
 
   // ── TAB: SEARCH TERMS ──
@@ -936,13 +1450,17 @@ function render(){
         else if(cAcos>50){suggest='↓ Lower bid';sugC='var(--amber)';}
         else if(cAcos>0&&cAcos<=25&&cd.sales>200){suggest='🚀 Scale';sugC='var(--green)';}
         else if(cCvr>=10&&cd.clicks>=5){suggest='💡 Good CVR';sugC='var(--green)';}
-        // Campaign ASINs from ad_groups
         const camp=cd.campaign;
+        // Targeting keywords
+        const targets=(cd.targeting||[]).slice(0,3).join(', ');
+        const targMore=(cd.targeting||[]).length>3?' +'+(cd.targeting.length-3):'';
         const campAsins=[];
         bds.forEach(bd=>{const ag=bd.ad_groups||{};const groups=ag[camp]||{};Object.values(groups).forEach(g=>{(g.asins||[]).forEach(a=>{if(!campAsins.includes(a))campAsins.push(a);});});});
         const asinImgs=campAsins.slice(0,3).map(a=>`<a href="https://www.amazon.in/dp/${a}" target="_blank"><img src="https://m.media-amazon.com/images/P/${a}._SL20_.jpg" onerror="this.style.display='none'" style="width:18px;height:18px;border-radius:2px;vertical-align:middle" title="${a}"></a>`).join(' ');
         o+=`<tr style="background:var(--card2);border-left:3px solid var(--blue)">`;
-        o+=`<td style="padding-left:24px;font-size:9px;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><a href="https://advertising.amazon.in/cm/campaigns" target="_blank" style="color:var(--blue);text-decoration:none" title="${camp}">${camp} ↗</a></td>`;
+        o+=`<td style="padding-left:20px;max-width:200px"><div style="font-size:9px"><a href="https://advertising.amazon.in/cm/campaigns" target="_blank" style="color:var(--blue);text-decoration:none" title="${camp}">${camp} ↗</a></div>`;
+        if(targets)o+=`<div style="font-size:8px;color:var(--dim);margin-top:2px">Target: ${targets}${targMore}</div>`;
+        o+=`</td>`;
         o+=`<td class="c" style="font-size:8px">${(cd.match||[]).join(',')}</td>`;
         o+=`<td class="c">${asinImgs}</td>`;
         o+=`<td class="r" style="font-size:10px">${fmt(cd.spend)}</td>`;
@@ -959,7 +1477,7 @@ function render(){
         o+=`</tr>`;
       });
     } else if(isDrilled){
-      o+=`<tr style="background:var(--card2)"><td colspan="15" style="padding-left:24px;font-size:10px;color:var(--dim)">No per-campaign data — re-run summarizer</td></tr>`;
+      o+=`<tr style="background:var(--card2)"><td colspan="15" style="padding-left:24px;font-size:10px;color:var(--dim)">No per-campaign data (SB keywords)</td></tr>`;
     }
     });
     if(!fTerms.length)o+=`<tr><td colspan="14" class="empty">No results</td></tr>`;
@@ -1032,6 +1550,8 @@ function render(){
     });
     o+=`</tbody></table></div></div>`;
   }
+
+  } // end ads page else block
 
   document.getElementById('app').innerHTML=o;
   setTimeout(()=>{
@@ -1203,9 +1723,232 @@ window.setCustom=function(w,v){if(w==='start')S.dateStart=v;else S.dateEnd=v;if(
 async function loadAll(){let ok=0;
 try{const r=await fetch('./ads_data.json?t='+Date.now());if(r.ok){S.ads=await r.json();ok++}}catch{}
 try{const r=await fetch('./rank_history.json?t='+Date.now());if(r.ok){S.rank=await r.json();ok++}}catch{}
+try{const r=await fetch('./sales_data.json?t='+Date.now());if(r.ok){S.sales=await r.json();}}catch{}
 const ab=getAllBD();ab.forEach(bd=>{if(bd.daily_totals){Object.keys(bd.daily_totals).forEach(d=>{if(!S.allDates.includes(d))S.allDates.push(d)});}});S.allDates.sort();if(S.allDates.length){S.dateStart=S.allDates[0];S.dateEnd=S.allDates[S.allDates.length-1];}
 if(ok>0)render();else document.getElementById('app').innerHTML='<div class="empty">No data found.</div>';}
+// Hash routing for Business page
+if(location.hash==='#business')S.page='business';
+window.addEventListener('hashchange',()=>{if(location.hash==='#business'){S.page='business';render();}else if(location.hash===''||location.hash==='#'){S.page='ads';render();}});
 loadAll();
+</script>
+<div id="jarvis-panel" class="jarvis-panel">
+  <div class="jarvis-hdr">
+    <div style="width:28px;height:28px;border-radius:50%;border:2px solid #00e5ff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#00e5ff;font-family:monospace">J</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:600;color:#00e5ff">JARVIS AI</div><div style="font-size:10px;color:var(--muted)">Ads Intelligence Assistant</div></div>
+    <button onclick="closeJarvisChat()" style="background:none;border:none;color:var(--muted);font-size:18px">✕</button>
+  </div>
+  <div class="jarvis-msgs" id="jarvis-msgs"></div>
+  <div style="padding:4px 18px;display:flex;gap:6px;flex-wrap:wrap" id="jarvis-suggestions"></div>
+  <div class="jarvis-input">
+    <input id="jarvis-q" placeholder="Ask about your ads performance..." onkeydown="if(event.key==='Enter')sendJarvis()">
+    <button onclick="sendJarvis()">Send</button>
+  </div>
+</div>
+<script>
+let jarvisOpen=false;
+function openJarvisChat(){
+  jarvisOpen=true;
+  document.getElementById('jarvis-panel').classList.add('open');
+  const msgs=document.getElementById('jarvis-msgs');
+  if(!msgs.children.length){
+    addJarvisMsg('ai','Hey! I\'m JARVIS, your ads intelligence assistant. Ask me anything about your campaigns, keywords, or performance.\n\nTry:\n• "Why are roll on sales not increasing?"\n• "Which keywords should I negate?"\n• "Summarize BA performance this month"\n• "Where can I reduce spend without losing sales?"');
+    showSuggestions(['Full performance analysis','Where am I wasting money?','Top growth opportunities','Why is ACOS increasing?','Comp conquest report']);
+  }
+  document.getElementById('jarvis-q').focus();
+}
+function closeJarvisChat(){jarvisOpen=false;document.getElementById('jarvis-panel').classList.remove('open');}
+function addJarvisMsg(type,text){
+  const msgs=document.getElementById('jarvis-msgs');
+  const div=document.createElement('div');
+  div.className=`jarvis-msg ${type}`;
+  div.textContent=text;
+  msgs.appendChild(div);
+  msgs.scrollTop=msgs.scrollHeight;
+  return div;
+}
+function showSuggestions(items){
+  const el=document.getElementById('jarvis-suggestions');
+  el.innerHTML=items.map(s=>`<button onclick="askJarvis('${s.replace(/'/g,"\\'")}')" style="background:var(--card);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:12px;font-size:10px;cursor:pointer">${s}</button>`).join('');
+}
+function askJarvis(q){document.getElementById('jarvis-q').value=q;sendJarvis();}
+
+function buildContext(){
+  const bds=getFiltBD();const asins=processAsins(bds);const terms=processTerms(bds,getRankMap());
+  let totalSpend=0,totalSales=0,totalUnits=0,totalClicks=0,totalImpr=0;
+  asins.forEach(a=>{totalSpend+=a.spend;totalSales+=a.sales;totalUnits+=a.units;totalClicks+=a.clicks;totalImpr+=a.impr||0;});
+  bds.forEach(bd=>{const sbd=bd.sb_daily||{};Object.values(sbd).forEach(v=>{totalSpend+=v.spend||0;totalSales+=v.sales||0;totalUnits+=v.units||0;totalClicks+=v.clicks||0;});});
+  const acos=totalSales>0?(totalSpend/totalSales*100):0;
+  const cpc=totalClicks>0?(totalSpend/totalClicks):0;
+  const cvr=totalClicks>0?(totalUnits/totalClicks*100):0;
+
+  // B/G/C split
+  const bgc={brand:0,generic:0,comp:0};terms.forEach(t=>{bgc[t.type]+=t.spend;});
+  const bgcTotal=bgc.brand+bgc.generic+bgc.comp;
+
+  // Monthly trend with detailed metrics
+  const monthly={};
+  bds.forEach(bd=>{Object.entries(bd.daily_totals||{}).forEach(([d,v])=>{
+    const m=d.slice(0,7);
+    if(!monthly[m])monthly[m]={spend:0,sales:0,clicks:0,units:0,impr:0,days:0};
+    monthly[m].spend+=v.spend||0;monthly[m].sales+=v.sales||0;
+    monthly[m].clicks+=v.clicks||0;monthly[m].units+=v.units||0;monthly[m].impr+=v.impr||0;
+    monthly[m].days++;
+  });});
+
+  // Weekly trend (last 4 weeks)
+  const weekly={};
+  bds.forEach(bd=>{Object.entries(bd.daily_totals||{}).forEach(([d,v])=>{
+    const dt=new Date(d);const wk=d.slice(0,4)+'-W'+String(Math.ceil((dt.getDate())/7)).padStart(2,'0')+'-'+d.slice(5,7);
+    if(!weekly[wk])weekly[wk]={spend:0,sales:0,clicks:0,units:0,label:d.slice(5)};
+    weekly[wk].spend+=v.spend||0;weekly[wk].sales+=v.sales||0;weekly[wk].clicks+=v.clicks||0;weekly[wk].units+=v.units||0;
+  });});
+
+  // Top 15 ASINs with category/range
+  const topAsins=asins.sort((a,b)=>b.spend-a.spend).slice(0,15).map(a=>{
+    let aBgc={b:0,g:0,c:0};bds.forEach(bd=>{const ab=bd.asin_bgc||{};const d=ab[a.asin]||{};aBgc.b+=d.brand||0;aBgc.g+=d.generic||0;aBgc.c+=d.comp||0;});
+    return{name:a.cleanName||a.sku||a.asin,asin:a.asin,cat:a.cat||'',range:a.range||'',spend:Math.round(a.spend),sales:Math.round(a.sales),acos:isFinite(a.acos)?Math.round(a.acos):999,units:a.units,cvr:a.clicks>0?Math.round(a.units/a.clicks*100):0,bgc:aBgc};
+  });
+
+  // Top 25 keywords with organic rank
+  const topKw=terms.sort((a,b)=>b.spend-a.spend).slice(0,25).map(t=>({kw:t.keyword,type:t.type,spend:Math.round(t.spend),sales:Math.round(t.sales),acos:t.sales>0?Math.round(t.spend/t.sales*100):999,clicks:t.clicks,units:t.units,cvr:t.clicks>0?Math.round(t.units/t.clicks*100):0,org:t.orgRank||null,camps:t.campaignList?.length||0}));
+
+  // Bleeders
+  const bleeders=terms.filter(t=>(t.spend>500&&t.sales===0)||(isFinite(t.acos)&&t.acos>90&&t.spend>500)).sort((a,b)=>b.spend-a.spend).slice(0,15).map(t=>({kw:t.keyword,type:t.type,spend:Math.round(t.spend),sales:Math.round(t.sales),clicks:t.clicks}));
+  const totalBleedSpend=bleeders.reduce((s,b)=>s+b.spend,0);
+
+  // Scale opportunities
+  const scale=terms.filter(t=>isFinite(t.acos)&&t.acos<=30&&t.sales>500).sort((a,b)=>b.sales-a.sales).slice(0,15).map(t=>({kw:t.keyword,type:t.type,spend:Math.round(t.spend),sales:Math.round(t.sales),acos:Math.round(t.acos),org:t.orgRank||null}));
+
+  // Organic strong but high ad spend
+  const orgStrong=terms.filter(t=>t.orgRank&&t.orgRank<=5&&t.spend>200).sort((a,b)=>b.spend-a.spend).slice(0,10).map(t=>({kw:t.keyword,org:t.orgRank,spend:Math.round(t.spend),sales:Math.round(t.sales),acos:t.sales>0?Math.round(t.spend/t.sales*100):999}));
+
+  // High CVR gems (underinvested)
+  const gems=terms.filter(t=>t.cvr>=15&&t.clicks>=10&&t.spend<2000).sort((a,b)=>b.cvr-a.cvr).slice(0,10).map(t=>({kw:t.keyword,cvr:Math.round(t.cvr),spend:Math.round(t.spend),sales:Math.round(t.sales),clicks:t.clicks}));
+
+  // Comp conquest (comp keywords with good ACOS)
+  const conquest=terms.filter(t=>t.type==='comp'&&isFinite(t.acos)&&t.acos<=40&&t.sales>300).sort((a,b)=>b.sales-a.sales).slice(0,10).map(t=>({kw:t.keyword,spend:Math.round(t.spend),sales:Math.round(t.sales),acos:Math.round(t.acos)}));
+
+  // No organic rank but high spend
+  const noOrg=terms.filter(t=>!t.orgRank&&t.spend>1000).sort((a,b)=>b.spend-a.spend).slice(0,10).map(t=>({kw:t.keyword,type:t.type,spend:Math.round(t.spend),sales:Math.round(t.sales)}));
+
+  // Category breakdown (if not filtered)
+  const catBreak={};
+  asins.forEach(a=>{const c=a.cat||'Other';if(!catBreak[c])catBreak[c]={spend:0,sales:0,units:0};catBreak[c].spend+=a.spend;catBreak[c].sales+=a.sales;catBreak[c].units+=a.units;});
+
+  const dates=[];bds.forEach(bd=>{Object.keys(bd.daily_totals||{}).forEach(d=>dates.push(d));});dates.sort();
+  const brandLabel=getBrandLabel();
+  const catLabel=S.catFilter!=='all'?S.catFilter:'All Categories';
+  const rangeLabel=S.rangeFilter!=='all'?S.rangeFilter:'All Ranges';
+
+  return `You are JARVIS — a senior Amazon Ads strategist and data analyst for Innovist (PAN INDIA VENTURES), an Indian BPC company running 3 brands on Amazon India:
+• Bare Anatomy (BA) — hair care: shampoos, conditioners, serums, masks, oils, sprays
+• Chemist at Play (CaP) — body & face care: body washes, roll-ons, face washes, serums, lip balms
+• SunScoop (SS) — sunscreens
+
+You have deep expertise in Amazon PPC, organic ranking strategy, keyword optimization, and e-commerce P&L. You think like a growth-focused brand manager who understands both performance marketing AND category dynamics.
+
+═══════════════════════════════════════
+CURRENT VIEW: ${brandLabel} | ${catLabel} | ${rangeLabel}
+PERIOD: ${S.datePeriod==='all'?'All time':S.dateStart+' → '+S.dateEnd} (${dates[0]||'?'} to ${dates[dates.length-1]||'?'})
+═══════════════════════════════════════
+
+📊 PERFORMANCE SNAPSHOT:
+• Spend: ₹${Math.round(totalSpend).toLocaleString()} | Sales: ₹${Math.round(totalSales).toLocaleString()} | ACOS: ${acos.toFixed(1)}%
+• Units: ${totalUnits.toLocaleString()} | Clicks: ${totalClicks.toLocaleString()} | CPC: ₹${cpc.toFixed(1)} | CVR: ${cvr.toFixed(1)}%
+• Impressions: ${totalImpr.toLocaleString()} | CTR: ${totalImpr>0?(totalClicks/totalImpr*100).toFixed(2):0}%
+• Wasted Spend (ACOS>90% or no sales): ₹${totalBleedSpend.toLocaleString()} across ${bleeders.length} keywords
+
+📈 B/G/C SPLIT:
+• Brand: ₹${Math.round(bgc.brand).toLocaleString()} (${bgcTotal>0?Math.round(bgc.brand/bgcTotal*100):0}%) — own brand searches
+• Generic: ₹${Math.round(bgc.generic).toLocaleString()} (${bgcTotal>0?Math.round(bgc.generic/bgcTotal*100):0}%) — category searches
+• Comp: ₹${Math.round(bgc.comp).toLocaleString()} (${bgcTotal>0?Math.round(bgc.comp/bgcTotal*100):0}%) — competitor conquesting
+
+📅 MONTHLY TREND:
+${Object.entries(monthly).sort().map(([m,v])=>{const ma=v.sales>0?(v.spend/v.sales*100).toFixed(1):0;const mc=v.clicks>0?(v.spend/v.clicks).toFixed(1):0;const mcvr=v.clicks>0?(v.units/v.clicks*100).toFixed(1):0;return`${m}: Spend ₹${Math.round(v.spend).toLocaleString()} | Sales ₹${Math.round(v.sales).toLocaleString()} | ACOS ${ma}% | Units ${v.units.toLocaleString()} | CPC ₹${mc} | CVR ${mcvr}% | ${v.days}d`;}).join('\n')}
+
+📦 CATEGORY BREAKDOWN:
+${Object.entries(catBreak).sort((a,b)=>b[1].spend-a[1].spend).map(([c,v])=>`${c}: Spend ₹${Math.round(v.spend).toLocaleString()} | Sales ₹${Math.round(v.sales).toLocaleString()} | ACOS ${v.sales>0?Math.round(v.spend/v.sales*100):999}% | Units ${v.units.toLocaleString()}`).join('\n')}
+
+🏆 TOP 15 ASINs:
+${topAsins.map((a,i)=>`${i+1}. ${a.name} [${a.cat}/${a.range}]: Spend ₹${a.spend.toLocaleString()} | Sales ₹${a.sales.toLocaleString()} | ACOS ${a.acos}% | Units ${a.units} | CVR ${a.cvr}% | B/G/C: ₹${Math.round(a.bgc.b).toLocaleString()}/₹${Math.round(a.bgc.g).toLocaleString()}/₹${Math.round(a.bgc.c).toLocaleString()}`).join('\n')}
+
+🔑 TOP 25 KEYWORDS:
+${topKw.map((k,i)=>`${i+1}. "${k.kw}" [${k.type}]: Spend ₹${k.spend.toLocaleString()} | Sales ₹${k.sales.toLocaleString()} | ACOS ${k.acos<999?k.acos+'%':'∞'} | CVR ${k.cvr}% | ${k.org?'Org#'+k.org:'No org'} | ${k.camps} camps`).join('\n')}
+
+🩸 BLEEDING KEYWORDS (₹${totalBleedSpend.toLocaleString()} wasted):
+${bleeders.map(b=>`"${b.kw}" [${b.type}]: Spend ₹${b.spend.toLocaleString()} | Sales ₹${b.sales.toLocaleString()} | ${b.clicks} clicks`).join('\n')||'None'}
+
+🚀 SCALE OPPORTUNITIES (ACOS≤30%, Sales>₹500):
+${scale.map(s=>`"${s.kw}" [${s.type}]: Spend ₹${s.spend.toLocaleString()} → Sales ₹${s.sales.toLocaleString()} @ ${s.acos}% ACOS | ${s.org?'Org#'+s.org:'No org'}`).join('\n')||'None'}
+
+🎯 ORGANIC STRONG + HIGH AD SPEND (reduce spend opportunity):
+${orgStrong.map(o=>`"${o.kw}": Org #${o.org} | Ad Spend ₹${o.spend.toLocaleString()} | Sales ₹${o.sales.toLocaleString()} | ACOS ${o.acos<999?o.acos+'%':'∞'}`).join('\n')||'None'}
+
+💎 HIGH CVR GEMS (underinvested — increase bids):
+${gems.map(g=>`"${g.kw}": CVR ${g.cvr}% | Spend ₹${g.spend.toLocaleString()} | Sales ₹${g.sales.toLocaleString()} | ${g.clicks} clicks`).join('\n')||'None'}
+
+⚔️ COMP CONQUEST WINNERS (competitor keywords working well):
+${conquest.map(c=>`"${c.kw}": Spend ₹${c.spend.toLocaleString()} → Sales ₹${c.sales.toLocaleString()} @ ${c.acos}% ACOS`).join('\n')||'None'}
+
+🔍 NO ORGANIC RANK + HIGH SPEND (organic gap):
+${noOrg.map(n=>`"${n.kw}" [${n.type}]: Spend ₹${n.spend.toLocaleString()} | Sales ₹${n.sales.toLocaleString()} — needs organic push`).join('\n')||'None'}
+
+═══════════════════════════════════════
+INSTRUCTIONS:
+1. Be specific — name exact keywords, ASINs, ₹ amounts, percentages
+2. Prioritize by impact — biggest ₹ savings or growth opportunities first
+3. Give clear actions: "Negate keyword X", "Increase bid on Y by 20%", "Add Z as exact match"
+4. Explain the WHY — connect data points (e.g., "Keyword X has 15% CVR but only ₹500 spend vs category average ₹5K — scaling this could add ₹15K sales")
+5. Flag risks — if ACOS is trending up MoM, if comp spend is >25%, if organic is weak
+6. Think about the full funnel — organic rank, ad spend, category depth, brand vs generic mix
+7. Format with clear sections and bullet points
+═══════════════════════════════════════`;
+}
+
+async function sendJarvis(){
+  const input=document.getElementById('jarvis-q');
+  const q=input.value.trim();if(!q)return;
+  input.value='';
+  addJarvisMsg('user',q);
+  document.getElementById('jarvis-suggestions').innerHTML='';
+  const thinkDiv=addJarvisMsg('ai','Analyzing your data...');
+  thinkDiv.innerHTML='<span class="thinking">Analyzing your data...</span>';
+
+  try{
+    const context=buildContext();
+    const resp=await fetch('/api/chat',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:3000,
+        system:context,
+        messages:[{role:'user',content:q}]
+      })
+    });
+    const data=await resp.json();
+    const text=data.content?.map(c=>c.text||'').join('')||'Sorry, I could not analyze this. Please try again.';
+    thinkDiv.className='jarvis-msg ai';
+    thinkDiv.textContent=text;
+    showSuggestions(['Deep dive on bleeding keywords','MoM trend analysis','Where to cut ₹1L spend safely?','Comp conquest strategy','Which keywords need organic push?']);
+  }catch(e){
+    thinkDiv.className='jarvis-msg ai';
+    thinkDiv.textContent='Error connecting to AI. Check your connection and try again.';
+  }
+  document.getElementById('jarvis-msgs').scrollTop=999999;
+}
+
+function runJarvisAnalysis(){
+  openJarvisChat();
+  setTimeout(()=>{
+    const brandLabel=getBrandLabel();
+    const catLabel=S.catFilter!=='all'?S.catFilter:'';
+    const rangeLabel=S.rangeFilter!=='all'?S.rangeFilter:'';
+    const context=catLabel?`${brandLabel} ${catLabel} ${rangeLabel}`:brandLabel;
+    document.getElementById('jarvis-q').value=`Give me a quick performance summary and top 3 actionable recommendations for ${context}`;
+    sendJarvis();
+  },300);
+}
 </script>
 </body>
 </html>
