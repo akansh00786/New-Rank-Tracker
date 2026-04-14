@@ -138,6 +138,31 @@
 .chart-dots{display:flex;gap:4px}
 .chart-dot{width:6px;height:6px;border-radius:50%;background:var(--dim);cursor:pointer}
 .chart-dot.active{background:var(--purple)}
+/* ASIN Drill-Down */
+.asin-drill-row td{padding:0!important;border-bottom:2px solid var(--purple)!important}
+.asin-drill-panel{background:#0d0d14;border-top:1px solid var(--border);padding:16px 20px 18px;animation:drillIn .18s ease}
+@keyframes drillIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.drill-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.drill-title{font-size:12px;font-weight:700;display:flex;align-items:center;gap:8px}
+.drill-close{width:22px;height:22px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px}
+.drill-close:hover{color:var(--red);border-color:var(--red)}
+.drill-kpis{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:12px}
+.dk{background:var(--card);border-radius:6px;padding:8px 10px;border:1px solid var(--border)}
+.dk .lb{font-size:7px;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+.dk .vl{font-size:13px;font-weight:700;font-family:var(--mono)}
+.drill-charts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.drill-chart-wrap{background:var(--card);border-radius:7px;border:1px solid var(--border);padding:10px 12px}
+.drill-chart-label{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
+.drill-split{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:12px}
+.drill-split-card{background:var(--card);border-radius:7px;border:1px solid var(--border);padding:12px}
+.drill-daily-wrap{max-height:220px;overflow-y:auto;border-radius:7px;border:1px solid var(--border);background:var(--card)}
+.drill-daily-wrap table{width:100%;border-collapse:collapse;font-size:9px}
+.drill-daily-wrap thead{position:sticky;top:0;background:var(--card2);z-index:1}
+.drill-daily-wrap th{padding:5px 8px;font-weight:600;color:var(--muted);text-transform:uppercase;font-size:7px;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.drill-daily-wrap td{padding:4px 8px;border-bottom:1px solid #1a1a24;font-family:var(--mono);font-size:9px}
+.drill-toggle{display:flex;gap:4px;margin-bottom:10px}
+.drill-toggle-btn{padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-family:var(--font)}
+.drill-toggle-btn.on{border-color:var(--purple);background:rgba(167,139,250,.1);color:var(--purple)}
 </style>
 </head>
 <body>
@@ -166,7 +191,7 @@ function fN(n){if(n==null)return'—';return Math.round(n).toLocaleString('en-IN
 function pct(n){if(n==null||isNaN(n))return'—';return n.toFixed(1)+'%'}
 function wowArrow(cur,prev){if(!prev||!cur)return'';const d=((cur-prev)/prev*100);if(d>0)return`<span class="wow-up">▲${d.toFixed(0)}%</span>`;if(d<0)return`<span class="wow-down">▼${Math.abs(d).toFixed(0)}%</span>`;return'—';}
 
-let S={ads:null,rank:[],sales:null,brands:new Set(['ALL']),page:'ads',tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',compStart:'',compEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null,bizSort:'net',bizDir:-1};
+let S={ads:null,rank:[],sales:null,brands:new Set(['ALL']),page:'ads',tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',compStart:'',compEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null,bizSort:'net',bizDir:-1,bizDrill:null,bizDrillMode:'daily'};
 
 function getDateRange(){const now=new Date();const y=now.getFullYear();const m=now.getMonth();switch(S.datePeriod){case'7d':{const d=new Date();d.setDate(d.getDate()-7);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'14d':{const d=new Date();d.setDate(d.getDate()-14);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'this_month':return{start:`${y}-${String(m+1).padStart(2,'0')}-01`,end:'9999-12-31'};case'last_month':{const lm=m===0?11:m-1;const ly=m===0?y-1:y;const ld=new Date(y,m,0).getDate();return{start:`${ly}-${String(lm+1).padStart(2,'0')}-01`,end:`${ly}-${String(lm+1).padStart(2,'0')}-${ld}`};}case'3months':{const d=new Date();d.setMonth(d.getMonth()-3);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'custom':if(S.dateStart&&S.dateEnd)return{start:S.dateStart,end:S.dateEnd};default:return{start:'2000-01-01',end:'9999-12-31'};}}
 function isDateAll(){return S.datePeriod==='all';}
@@ -1081,8 +1106,9 @@ function render(){
         const organic_a=Math.max(0,a.net-a.adSales);
         const orgPct_a=a.net>0?(organic_a/a.net*100):0;
         const brandCol={'BA':'var(--purple)','CAP':'var(--cyan)','SS':'var(--amber)'}[a.brandShort]||'var(--muted)';
+        const isDrilled=S.bizDrill===a.asin;
         
-        o+=`<tr>`;
+        o+=`<tr class="drill" style="${isDrilled?'background:#16162280;border-left:2px solid var(--purple);':''}" onclick="toggleBizDrill('${a.asin}')">`;
         o+=`<td><img src="https://m.media-amazon.com/images/P/${a.asin.toUpperCase()}._SL32_.jpg" onerror="this.style.display='none'" style="width:24px;height:24px;border-radius:3px;background:var(--card2)"></td>`;
         o+=`<td><div style="font-size:10px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}"><a href="https://www.amazon.in/dp/${a.asin}" target="_blank" style="color:var(--text);text-decoration:none">${a.title||a.sku||a.asin}</a></div></td>`;
         o+=`<td class="c"><span style="font-size:9px;font-weight:600;color:${brandCol}">${a.brandShort}</span></td>`;
@@ -1115,6 +1141,142 @@ function render(){
           o+=`<td class="c" style="color:var(--muted)">${a.drrB>0?Math.round(a.drrB):'—'}</td><td class="c">${deltaHtml(dDrr)}</td>`;
         }
         o+=`</tr>`;
+        
+        // ── DRILL-DOWN PANEL ──
+        if(S.bizDrill===a.asin){
+          const colSpan=allCols.length+(hasComp?8:0);
+          o+=`<tr class="asin-drill-row"><td colspan="${colSpan}">`;
+          o+=`<div class="asin-drill-panel">`;
+          o+=`<div class="drill-hdr">`;
+          o+=`<div class="drill-title"><img src="https://m.media-amazon.com/images/P/${a.asin.toUpperCase()}._SL75_.jpg" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:5px;background:var(--card2)"><div><span>${a.title||a.sku||a.asin}</span><div style="display:flex;gap:8px;margin-top:2px"><span style="font-size:9px;font-family:var(--mono);color:var(--muted)">${a.asin}</span><span style="font-size:9px;font-weight:600;color:${{BA:'var(--purple)',CAP:'var(--cyan)',SS:'var(--amber)'}[a.brandShort]||'var(--muted)'}">${a.brandShort}</span><span style="font-size:9px;color:var(--dim)">${a.category||''}</span></div></div></div>`;
+          o+=`<div style="display:flex;align-items:center;gap:8px">`;
+          o+=`<div class="drill-toggle"><button class="drill-toggle-btn${S.bizDrillMode==='daily'?' on':''}" onclick="event.stopPropagation();S.bizDrillMode='daily';renderDrill('${a.asin}')">Daily</button><button class="drill-toggle-btn${S.bizDrillMode==='monthly'?' on':''}" onclick="event.stopPropagation();S.bizDrillMode='monthly';renderDrill('${a.asin}')">Monthly</button></div>`;
+          o+=`<button class="drill-close" onclick="event.stopPropagation();S.bizDrill=null;render()">✕</button>`;
+          o+=`</div></div>`;
+          
+          // Aggregate daily data for this ASIN
+          const drlSa=(()=>{for(const bn of Object.keys(S.sales.brands||{})){const bd=S.sales.brands[bn];const x=(bd.asins||[]).find(x=>x.asin===a.asin);if(x)return x;}return null;})();
+          const drlAd=(()=>{let found=null;getFiltBD().forEach(bd=>{(bd.products||[]).forEach(r=>{if(r.asin===a.asin)found=r;});});return found;})();
+          
+          // Build merged daily map (now with impr + mrp + gross)
+          const drlDays={};
+          const drlDF=!isDateAll();const{start:drlS,end:drlE}=drlDF?getDateRange():{start:'2000-01-01',end:'9999-12-31'};
+          if(drlSa&&drlSa.daily){Object.entries(drlSa.daily).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,hasSales:false,hasAd:false};drlDays[d].net+=v.net||0;drlDays[d].units+=v.units||0;drlDays[d].mrp+=v.mrp||0;drlDays[d].gross+=v.gross||0;drlDays[d].hasSales=true;});}
+          if(drlAd&&drlAd.days){Object.entries(drlAd.days).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,hasSales:false,hasAd:false};drlDays[d].spend+=v.spend||0;drlDays[d].adSales+=v.sales||0;drlDays[d].clicks+=v.clicks||0;drlDays[d].impr+=v.impr||0;drlDays[d].hasAd=true;});}
+          
+          const sortedDays=Object.entries(drlDays).sort((a,b)=>a[0]<b[0]?-1:1);
+          
+          // Monthly rollup
+          const drlMonths={};
+          sortedDays.forEach(([d,v])=>{const m=d.slice(0,7);if(!drlMonths[m])drlMonths[m]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,days:0};const mo=drlMonths[m];mo.net+=v.net;mo.units+=v.units;mo.spend+=v.spend;mo.adSales+=v.adSales;mo.clicks+=v.clicks;mo.impr+=v.impr;mo.mrp+=v.mrp;mo.gross+=v.gross;mo.days++;});
+          
+          const isMonthly=S.bizDrillMode==='monthly'||(S.bizDrillMode!=='daily'&&!drlDF);
+          const pts=isMonthly?Object.entries(drlMonths).sort((a,b)=>a[0]<b[0]?-1:1):sortedDays;
+          
+          // Compute KPIs from daily data (so they respect date filter)
+          let dNet=0,dUnits=0,dSpend=0,dAdSales=0,dClicks=0,dImpr=0,dMrp=0,dGross=0;
+          sortedDays.forEach(([,v])=>{dNet+=v.net;dUnits+=v.units;dSpend+=v.spend;dAdSales+=v.adSales;dClicks+=v.clicks;dImpr+=v.impr;dMrp+=v.mrp;dGross+=v.gross;});
+          const dTacos=dNet>0?(dSpend/dNet*100):0;
+          const dAcos=dAdSales>0?(dSpend/dAdSales*100):0;
+          const dOrg=Math.max(0,dNet-dAdSales);
+          const dOrgPct=dNet>0?(dOrg/dNet*100):0;
+          const dCvr=dClicks>0?(dUnits/dClicks*100):0;
+          const dCpc=dClicks>0?(dSpend/dClicks):0;
+          const dCtr=dImpr>0?(dClicks/dImpr*100):0;
+          const dAsp=dUnits>0?(dNet/dUnits):0;
+          const dDisc=dMrp>0?(1-dGross/dMrp)*100:0;
+          const numDays=sortedDays.length||1;
+          const dDrrU=dUnits/numDays;
+          const dDrrR=dNet/numDays;
+          
+          // ── ROW 1: Primary KPIs ──
+          o+=`<div class="drill-kpis">`;
+          o+=`<div class="dk"><div class="lb">Net Sales</div><div class="vl" style="color:var(--green)">${fmt(dNet)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Units</div><div class="vl">${fN(dUnits)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">ASP</div><div class="vl">₹${dAsp>0?Math.round(dAsp):0}</div></div>`;
+          o+=`<div class="dk"><div class="lb">DRR Units</div><div class="vl">${dDrrU>0?dDrrU.toFixed(0):'—'}</div></div>`;
+          o+=`<div class="dk"><div class="lb">DRR Rev</div><div class="vl" style="color:var(--green)">${fmt(Math.round(dDrrR))}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Disc %</div><div class="vl" style="color:var(--cyan)">${dDisc>0?dDisc.toFixed(1)+'%':'—'}</div></div>`;
+          o+=`<div class="dk"><div class="lb">${numDays}d Period</div><div class="vl" style="color:var(--dim);font-size:10px">${sortedDays.length>0?sortedDays[0][0].slice(5):''} → ${sortedDays.length>0?sortedDays[sortedDays.length-1][0].slice(5):''}</div></div>`;
+          o+=`</div>`;
+          
+          // ── ROW 2: Ad KPIs ──
+          o+=`<div class="drill-kpis">`;
+          o+=`<div class="dk"><div class="lb">Ad Spend</div><div class="vl" style="color:var(--amber)">${fmt(dSpend)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Ad Sales</div><div class="vl" style="color:var(--blue)">${fmt(dAdSales)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">TACOS</div><div class="vl" style="color:${dTacos<=12?'var(--green)':dTacos<=18?'var(--amber)':'var(--red)'}">${dTacos>0?dTacos.toFixed(1)+'%':'—'}</div></div>`;
+          o+=`<div class="dk"><div class="lb">ACOS</div><div class="vl" style="color:${acC(dAcos)}">${dAcos>0?dAcos.toFixed(1)+'%':'—'}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Organic</div><div class="vl" style="color:var(--green2)">${fmt(dOrg)} <span style="font-size:9px;font-weight:400">(${dOrgPct.toFixed(0)}%)</span></div></div>`;
+          o+=`<div class="dk"><div class="lb">CPC / CTR</div><div class="vl" style="font-size:11px">₹${dCpc>0?dCpc.toFixed(1):'—'} / ${dCtr>0?dCtr.toFixed(1)+'%':'—'}</div></div>`;
+          o+=`<div class="dk"><div class="lb">CVR / Clicks</div><div class="vl" style="font-size:11px">${dCvr>0?dCvr.toFixed(1)+'%':'—'} / ${fN(dClicks)}</div></div>`;
+          o+=`</div>`;
+          
+          // ── Charts row ──
+          const cId=a.asin.replace(/[^a-z0-9]/gi,'');
+          o+=`<div class="drill-charts">`;
+          o+=`<div class="drill-chart-wrap"><div class="drill-chart-label">DRR Units & Net Sales</div><div style="position:relative;height:140px"><canvas id="dc_sales_${cId}"></canvas></div></div>`;
+          o+=`<div class="drill-chart-wrap"><div class="drill-chart-label">Ad Spend & TACOS %</div><div style="position:relative;height:140px"><canvas id="dc_spend_${cId}"></canvas></div></div>`;
+          o+=`<div class="drill-chart-wrap"><div class="drill-chart-label">CVR % & ACOS %</div><div style="position:relative;height:140px"><canvas id="dc_rates_${cId}"></canvas></div></div>`;
+          o+=`</div>`;
+          
+          // ── Revenue Split + Daily Table ──
+          o+=`<div class="drill-split">`;
+          // Doughnut: Ad Sales vs Organic
+          o+=`<div class="drill-split-card"><div class="drill-chart-label">Revenue Split</div><div style="position:relative;height:160px"><canvas id="dc_pie_${cId}"></canvas></div></div>`;
+          // Daily data table
+          o+=`<div class="drill-split-card" style="padding:0"><div style="padding:8px 12px 4px"><span class="drill-chart-label">Daily Breakdown</span></div>`;
+          o+=`<div class="drill-daily-wrap"><table><thead><tr>`;
+          o+=`<th class="l">Date</th><th class="r">Net Sales</th><th class="r">Units</th><th class="r">ASP</th><th class="r">Ad Spend</th><th class="r">Ad Sales</th><th class="c">TACOS</th><th class="c">ACOS</th><th class="r">Organic</th><th class="c">Org%</th>`;
+          o+=`</tr></thead><tbody>`;
+          // Show daily rows (newest first)
+          const tblDays=[...sortedDays].reverse();
+          tblDays.forEach(([d,v])=>{
+            const tNet=v.net;const tUnits=v.units;const tSpend=v.spend;const tAdS=v.adSales;
+            const tTacos=tNet>0?(tSpend/tNet*100):0;const tAcos=tAdS>0?(tSpend/tAdS*100):0;
+            const tOrg=Math.max(0,tNet-tAdS);const tOrgP=tNet>0?(tOrg/tNet*100):0;
+            const tAsp=tUnits>0?Math.round(tNet/tUnits):0;
+            o+=`<tr>`;
+            o+=`<td style="color:var(--muted)">${d.slice(5)}</td>`;
+            o+=`<td class="r" style="color:var(--green)">${tNet>0?fmt(tNet):'—'}</td>`;
+            o+=`<td class="r">${tUnits||'—'}</td>`;
+            o+=`<td class="r">₹${tAsp||'—'}</td>`;
+            o+=`<td class="r" style="color:var(--amber)">${tSpend>0?fmt(tSpend):'—'}</td>`;
+            o+=`<td class="r" style="color:var(--blue)">${tAdS>0?fmt(tAdS):'—'}</td>`;
+            o+=`<td class="c" style="color:${tTacos<=12?'var(--green)':tTacos<=18?'var(--amber)':'var(--red)'}">${tTacos>0?tTacos.toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="c" style="color:${acC(tAcos)}">${tAcos>0?tAcos.toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="r" style="color:var(--green2)">${tOrg>0?fmt(tOrg):'—'}</td>`;
+            o+=`<td class="c" style="color:var(--green2)">${tOrgP>0?tOrgP.toFixed(0)+'%':'—'}</td>`;
+            o+=`</tr>`;
+          });
+          o+=`</tbody></table></div></div>`;
+          o+=`</div>`; // end drill-split
+          
+          // Serialize chart data inline
+          const chartLabels=JSON.stringify(pts.map(([d])=>isMonthly?d:d.slice(5)));
+          const chartUnits=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?+(v.units/v.days).toFixed(1):null):+(v.units).toFixed(0)));
+          const chartNet=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?Math.round(v.net/v.days):null):Math.round(v.net)));
+          const chartSpend=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?Math.round(v.spend/v.days):null):(v.spend>0?Math.round(v.spend):null)));
+          const chartTacos=JSON.stringify(pts.map(([,v])=>{const n=isMonthly?v.net:v.net;const s=isMonthly?v.spend:v.spend;return(n>100&&s>0)?+(s/n*100).toFixed(1):null;}));
+          const chartCvr=JSON.stringify(pts.map(([,v])=>v.clicks>=3&&v.units>0?+(v.units/v.clicks*100).toFixed(1):null));
+          const chartAcos=JSON.stringify(pts.map(([,v])=>{const as=isMonthly?v.adSales:v.adSales;const s=isMonthly?v.spend:v.spend;const ac=as>100&&s>0?+(s/as*100).toFixed(1):null;return(ac&&ac<500)?ac:null;}));
+          
+          // Store chart data in global job — executed after render() sets innerHTML
+          window._drillChartJob={
+            cId:JSON.stringify(cId),
+            labels:chartLabels,
+            units:chartUnits,
+            net:chartNet,
+            spend:chartSpend,
+            tacos:chartTacos,
+            cvr:chartCvr,
+            acos:chartAcos,
+            adSalesTotal:JSON.stringify(Math.round(dAdSales)),
+            organicTotal:JSON.stringify(Math.round(dOrg))
+          };
+          
+          o+=`</div></td></tr>`;
+        }
+        // ── END DRILL-DOWN ──
       });
       o+=`</tbody></table></div></div>`;
     }
@@ -1554,6 +1716,15 @@ function render(){
   } // end ads page else block
 
   document.getElementById('app').innerHTML=o;
+  // Mount drill-down charts after DOM settles
+  if(window._drillChartJob){
+    const j=window._drillChartJob;
+    window._drillChartJob=null;
+    requestAnimationFrame(()=>{requestAnimationFrame(()=>{
+      try{_mountDrillCharts(JSON.parse(j.cId),JSON.parse(j.labels),JSON.parse(j.units),JSON.parse(j.net),JSON.parse(j.spend),JSON.parse(j.tacos),JSON.parse(j.cvr),JSON.parse(j.acos),JSON.parse(j.adSalesTotal),JSON.parse(j.organicTotal));}
+      catch(e){console.warn('drill chart mount',e);}
+    });});
+  }
   setTimeout(()=>{
     if(S.tab==='overview'){
       // Build daily chart data from PRODUCT reports (allAsins.days)
@@ -1903,6 +2074,67 @@ INSTRUCTIONS:
 6. Think about the full funnel — organic rank, ad spend, category depth, brand vs generic mix
 7. Format with clear sections and bullet points
 ═══════════════════════════════════════`;
+}
+
+// Pending drill chart renders — executed after innerHTML settles
+window._drillChartJob=null;
+
+function toggleBizDrill(asin){
+  S.bizDrill=(S.bizDrill===asin)?null:asin;
+  render();
+}
+function renderDrill(asin){
+  render();
+}
+
+function _mountDrillCharts(cId,labels,units,net,spend,tacos,cvr,acos,adSalesTotal,organicTotal){
+  function safeChart(id,cfg){
+    try{
+      const c=document.getElementById(id);
+      if(!c)return;
+      const ex=Chart.getChart(c);if(ex)ex.destroy();
+      new Chart(c,cfg);
+    }catch(e){console.warn('drill chart',id,e);}
+  }
+  const sm=labels.length>90;
+  const xScale={ticks:{color:'#444',font:{size:8},maxRotation:45,maxTicksLimit:20},grid:{color:'#1c1c25'}};
+  const mkY=(pos,color,cb)=>({type:'linear',position:pos,beginAtZero:true,min:0,ticks:{color:color||'#666',font:{size:8},callback:cb||(v=>v),maxTicksLimit:6},grid:pos==='right'?{drawOnChartArea:false}:{color:'#1c1c25'}});
+  const base={responsive:true,maintainAspectRatio:false,animation:false,spanGaps:true,plugins:{legend:{labels:{color:'#555',font:{size:9}}}}};
+
+  // Chart 1: Units bar + Net Sales line
+  safeChart('dc_sales_'+cId,{type:'bar',data:{labels,datasets:[
+    {label:'DRR Units',data:units,yAxisID:'y',backgroundColor:'rgba(167,139,250,.5)',borderColor:'rgba(167,139,250,.8)',borderWidth:1,order:2},
+    {label:'Net Sales ₹',data:net,yAxisID:'y1',type:'line',borderColor:'#10b981',backgroundColor:'transparent',pointRadius:sm?0:2,pointBackgroundColor:'#10b981',tension:0.3,borderWidth:1.5,spanGaps:true,order:1}
+  ]},options:{...base,scales:{x:xScale,
+    y:mkY('left','#a78bfa'),
+    y1:mkY('right','#10b981',v=>v>=1000?'₹'+(v/1000).toFixed(0)+'K':'₹'+v)}}});
+
+  // Chart 2: Ad Spend bar + TACOS line
+  safeChart('dc_spend_'+cId,{type:'bar',data:{labels,datasets:[
+    {label:'Ad Spend ₹',data:spend,yAxisID:'y',backgroundColor:'rgba(245,158,11,.45)',borderColor:'rgba(245,158,11,.8)',borderWidth:1,order:2},
+    {label:'TACOS %',data:tacos,yAxisID:'y1',type:'line',borderColor:'#f97316',backgroundColor:'transparent',pointRadius:sm?0:2,pointBackgroundColor:'#f97316',tension:0.3,borderWidth:1.5,spanGaps:true,order:1}
+  ]},options:{...base,scales:{x:xScale,
+    y:mkY('left','#f59e0b',v=>v>=1000?'₹'+(v/1000).toFixed(0)+'K':'₹'+v),
+    y1:mkY('right','#f97316',v=>Number(v).toFixed(0)+'%')}}});
+
+  // Chart 3: CVR line + ACOS line
+  safeChart('dc_rates_'+cId,{type:'line',data:{labels,datasets:[
+    {label:'CVR %',data:cvr,yAxisID:'y',borderColor:'#22d3ee',backgroundColor:'transparent',pointRadius:sm?0:2,pointBackgroundColor:'#22d3ee',tension:0.3,borderWidth:1.5,spanGaps:true},
+    {label:'ACOS %',data:acos,yAxisID:'y1',borderColor:'#ef4444',backgroundColor:'transparent',pointRadius:sm?0:2,pointBackgroundColor:'#ef4444',tension:0.3,borderWidth:1.5,spanGaps:true}
+  ]},options:{...base,scales:{x:xScale,
+    y:mkY('left','#22d3ee',v=>Number(v).toFixed(0)+'%'),
+    y1:mkY('right','#ef4444',v=>Number(v).toFixed(0)+'%')}}});
+
+  // Chart 4: Revenue Split Doughnut
+  const pieTotal=(adSalesTotal||0)+(organicTotal||0);
+  if(pieTotal>0){
+    const adPct=((adSalesTotal/pieTotal)*100).toFixed(0);
+    const orgPct=((organicTotal/pieTotal)*100).toFixed(0);
+    safeChart('dc_pie_'+cId,{type:'doughnut',data:{
+      labels:[`Ad Sales ${adPct}%`,`Organic ${orgPct}%`],
+      datasets:[{data:[adSalesTotal,organicTotal],backgroundColor:['rgba(59,130,246,.6)','rgba(16,185,129,.6)'],borderWidth:0}]
+    },options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'55%',plugins:{legend:{display:true,position:'bottom',labels:{color:'#666',font:{size:9},padding:8}}}}});
+  }
 }
 
 async function sendJarvis(){
