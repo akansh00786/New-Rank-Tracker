@@ -150,16 +150,9 @@
 .dk{background:var(--card);border-radius:6px;padding:8px 10px;border:1px solid var(--border)}
 .dk .lb{font-size:7px;color:#555;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
 .dk .vl{font-size:13px;font-weight:700;font-family:var(--mono)}
-.drill-charts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px}
+.drill-charts{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 .drill-chart-wrap{background:var(--card);border-radius:7px;border:1px solid var(--border);padding:10px 12px}
 .drill-chart-label{font-size:9px;color:var(--muted);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em}
-.drill-split{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-bottom:12px}
-.drill-split-card{background:var(--card);border-radius:7px;border:1px solid var(--border);padding:12px}
-.drill-daily-wrap{max-height:220px;overflow-y:auto;border-radius:7px;border:1px solid var(--border);background:var(--card)}
-.drill-daily-wrap table{width:100%;border-collapse:collapse;font-size:9px}
-.drill-daily-wrap thead{position:sticky;top:0;background:var(--card2);z-index:1}
-.drill-daily-wrap th{padding:5px 8px;font-weight:600;color:var(--muted);text-transform:uppercase;font-size:7px;letter-spacing:.06em;border-bottom:1px solid var(--border)}
-.drill-daily-wrap td{padding:4px 8px;border-bottom:1px solid #1a1a24;font-family:var(--mono);font-size:9px}
 .drill-toggle{display:flex;gap:4px;margin-bottom:10px}
 .drill-toggle-btn{padding:3px 10px;border-radius:5px;font-size:9px;font-weight:600;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-family:var(--font)}
 .drill-toggle-btn.on{border-color:var(--purple);background:rgba(167,139,250,.1);color:var(--purple)}
@@ -170,8 +163,7 @@
 <a href="index.html">Organic Tracker</a>
 <a href="ads.html" class="on" id="nav-ads" onclick="if(S){S.page='ads';S.tab='overview';render();return false;}">Ads Intelligence</a>
 <a href="ads.html#business" id="nav-biz" onclick="if(S){S.page='business';render();return false;}">Business</a>
-<a href="ai.html">AI Recommendations</a>
-<a href="sales.html">Sales</a>
+<a href="ads.html#range" id="nav-range" onclick="if(S){S.page='range';render();return false;}">Analysis</a>
 </div>
 <div id="app"><div class="ld"><div class="spin"></div><div>Loading...</div></div></div>
 <script>
@@ -191,7 +183,7 @@ function fN(n){if(n==null)return'—';return Math.round(n).toLocaleString('en-IN
 function pct(n){if(n==null||isNaN(n))return'—';return n.toFixed(1)+'%'}
 function wowArrow(cur,prev){if(!prev||!cur)return'';const d=((cur-prev)/prev*100);if(d>0)return`<span class="wow-up">▲${d.toFixed(0)}%</span>`;if(d<0)return`<span class="wow-down">▼${Math.abs(d).toFixed(0)}%</span>`;return'—';}
 
-let S={ads:null,rank:[],sales:null,brands:new Set(['ALL']),page:'ads',tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',compStart:'',compEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null,bizSort:'net',bizDir:-1,bizDrill:null,bizDrillMode:'daily'};
+let S={ads:null,rank:[],sales:null,brands:new Set(['ALL']),page:'ads',tab:'overview',obj:'all',termType:'all',campType:'all',catFilter:'all',rangeFilter:'all',campFilter:'',search:'',asinFilter:'',sortCol:'spend',sortDir:-1,drillType:null,drillId:null,drillBrand:null,datePeriod:'all',dateStart:'',dateEnd:'',compStart:'',compEnd:'',allDates:[],showMore:false,chartIdx:0,showCharts:true,showPerf:true,skuTypeFilter:'all',kwFilter:'all',kwDrill:null,bizSort:'net',bizDir:-1,bizDrill:null,bizDrillMode:'daily',bizMonthDrill:null};
 
 function getDateRange(){const now=new Date();const y=now.getFullYear();const m=now.getMonth();switch(S.datePeriod){case'7d':{const d=new Date();d.setDate(d.getDate()-7);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'14d':{const d=new Date();d.setDate(d.getDate()-14);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'this_month':return{start:`${y}-${String(m+1).padStart(2,'0')}-01`,end:'9999-12-31'};case'last_month':{const lm=m===0?11:m-1;const ly=m===0?y-1:y;const ld=new Date(y,m,0).getDate();return{start:`${ly}-${String(lm+1).padStart(2,'0')}-01`,end:`${ly}-${String(lm+1).padStart(2,'0')}-${ld}`};}case'3months':{const d=new Date();d.setMonth(d.getMonth()-3);return{start:d.toISOString().slice(0,10),end:'9999-12-31'};}case'custom':if(S.dateStart&&S.dateEnd)return{start:S.dateStart,end:S.dateEnd};default:return{start:'2000-01-01',end:'9999-12-31'};}}
 function isDateAll(){return S.datePeriod==='all';}
@@ -262,18 +254,35 @@ function getBrandSales(brandName){
 }
 
 // Get ASIN's campaigns from products data (each product row has campaigns in search_terms)
+// ASIN → Campaign mapping (cached per render)
+let _asinCampCache=null;
 function getAsinCampaigns(bds,asin){
-  const c=new Set();
-  bds.forEach(bd=>{
-    // From ad_groups: campaign→adGroup→{asins:[]}
-    const ag=bd.ad_groups||{};
-    Object.entries(ag).forEach(([camp,groups])=>{
-      Object.values(groups).forEach(g=>{
-        if((g.asins||[]).includes(asin))c.add(camp);
+  if(!_asinCampCache){
+    _asinCampCache={};
+    bds.forEach(bd=>{
+      // Source 1: ad_groups — campaign → adGroup → asins[] (SP campaigns)
+      Object.entries(bd.ad_groups||{}).forEach(([camp,groups])=>{
+        Object.values(groups).forEach(g=>{
+          (g.asins||[]).forEach(a=>{
+            if(!_asinCampCache[a])_asinCampCache[a]=new Set();
+            _asinCampCache[a].add(camp);
+          });
+        });
+      });
+      // Source 2: products — each product row has ASIN + campaigns (covers SD)
+      (bd.products||[]).forEach(p=>{
+        if(!p.asin)return;
+        // products don't have campaign names directly, but search_terms do
+        // We link via search_terms: for each term's campaigns, check if any
+        // of those campaigns appear in ad_groups with this ASIN
       });
     });
-  });
-  return c;
+    // Source 3: search_terms camp_data — reverse map campaign→ASIN
+    // Each search term knows its campaigns. Each product knows its ASIN.
+    // We can also check if a campaign name contains the ASIN (common in SP auto)
+    // But the safest: just use ad_groups which IS the authoritative ASIN→Campaign link
+  }
+  return _asinCampCache[asin]||new Set();
 }
 
 // B/G/C splits per ASIN — read pre-computed from summarizer
@@ -367,11 +376,12 @@ function processTerms(bds,rm){
         campaigns:new Set(),matchTypes:new Set(),adGroups:new Set(),type:r.type||'generic',brands:new Set(),camp_data:[]};
       const x=t[kw];
       let rSpend=r.spend||0,rSales=r.sales||0,rClicks=r.clicks||0,rImpr=r.impr||0,rUnits=r.units||0;
-      if(dateFiltered&&r.days&&Object.keys(r.days).length){
-        const origSpend=rSpend;
-        rSpend=0;rSales=0;rClicks=0;
-        Object.entries(r.days).forEach(([d,v])=>{if(d>=start&&d<=end){rSpend+=v.spend||0;rSales+=v.sales||0;rClicks+=v.clicks||0;}});
-        // Keep units as-is from file — don't zero or estimate
+      if(dateFiltered){
+        if(r.days&&Object.keys(r.days).length){
+          rSpend=0;rSales=0;rClicks=0;rUnits=0;rImpr=0;
+          Object.entries(r.days).forEach(([d,v])=>{if(d>=start&&d<=end){rSpend+=v.spend||0;rSales+=v.sales||0;rClicks+=v.clicks||0;rUnits+=v.units||0;rImpr+=v.impr||0;}});
+        }
+        // If no daily data exists, keep full-period totals as fallback (better than zeroing)
       }
       x.spend+=rSpend;x.sales+=rSales;x.clicks+=rClicks;x.impr+=rImpr;x.units+=rUnits;
       (r.campaigns||[]).forEach(c=>x.campaigns.add(c));
@@ -621,15 +631,20 @@ function renderDatePicker(){
 // ── RENDER ──
 function render(){
   try{
+  _asinCampCache=null; // invalidate ASIN→Campaign cache
   // Update top nav highlighting
   const navAds=document.getElementById('nav-ads');
   const navBiz=document.getElementById('nav-biz');
   if(navAds)navAds.className=S.page==='ads'?'on':'';
   if(navBiz)navBiz.className=S.page==='business'?'on':'';
+  const navRange=document.getElementById('nav-range');
+  if(navRange)navRange.className=S.page==='range'?'on':'';
   
   destroyCharts();const allBrands=getAllBD();
   if(!allBrands.length){document.getElementById('app').innerHTML='<div class="empty">No data found.</div>';return;}
   const bds=getFiltBD();const rm=getRankMap();
+  // Range Intel page — skip regular header/controls
+  if(S.page==='range'){renderRangeIntel('',bds);return;}
   if(S.drillType==='campaign'||S.drillType==='adgroup')return renderDrill(S.drillType,bds,rm);
   if(S.drillType==='asin')return renderDrill('asin',bds,rm);
   // PRIMARY: Product data
@@ -918,7 +933,8 @@ function render(){
         if(idx>0){const pm=allMonths[idx-1];const psm=salesM.monthly[pm]||{net:0};if(psm.net>0){const ch=((sm.net-psm.net)/psm.net*100);momHtml=`<span style="font-weight:600;color:${ch>=0?'var(--green)':'var(--red)'}">${ch>=0?'▲':'▼'}${Math.abs(ch).toFixed(0)}%</span>`;}}
         const mParts=m.split('-');const mo=parseInt(mParts[1]);
         const mLabel=['','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][mo]+" '"+mParts[0].slice(2);
-        o+=`<tr><td style="font-weight:600">${mLabel}</td>`;
+        const isExpanded=S.bizMonthDrill===m;
+        o+=`<tr class="drill" style="${isExpanded?'background:#16162280;border-left:2px solid var(--purple);':''}" onclick="S.bizMonthDrill=S.bizMonthDrill==='${m}'?null:'${m}';render()"><td style="font-weight:600">${mLabel} ${isExpanded?'▾':'▸'}</td>`;
         o+=`<td class="r" style="color:var(--green);font-weight:600">${fmt(sm.net)}</td>`;
         o+=`<td class="c" style="font-size:10px">${momHtml||'—'}</td>`;
         o+=`<td class="r" style="color:var(--dim)">${fmt(sm.mrp)}</td>`;
@@ -933,6 +949,56 @@ function render(){
         o+=`<td class="r">₹${mAsp>0?Math.round(mAsp):0}</td>`;
         o+=`<td class="r">${fmt(mDrrSales)}</td>`;
         o+=`<td class="r">${fN(Math.round(mDrrUnits))}</td></tr>`;
+        // ── Month drill-down: daily rows ──
+        if(isExpanded){
+          // Gather daily data for this month across all filtered brands
+          const mdRows={};
+          Object.entries(S.sales.brands||{}).forEach(([bn2,sbd2])=>{
+            if(!isBrandAll()&&!S.brands.has(bn2))return;
+            (sbd2.asins||[]).forEach(sa2=>{
+              if(S.catFilter&&S.catFilter!=='all'){const info2=getAsinInfo(sa2.asin);if(info2.c!==S.catFilter)return;}
+              Object.entries(sa2.daily||{}).forEach(([dt2,v2])=>{
+                if(!dt2.startsWith(m))return;
+                if(dateFiltered&&(dt2<dfStart||dt2>dfEnd))return;
+                if(!mdRows[dt2])mdRows[dt2]={net:0,units:0,mrp:0,gross:0,adSpend:0,adSales:0};
+                mdRows[dt2].net+=v2.net||0;mdRows[dt2].units+=v2.units||0;
+                mdRows[dt2].mrp+=v2.mrp||0;mdRows[dt2].gross+=v2.gross||0;
+              });
+            });
+          });
+          // Merge ads daily
+          bds.forEach(bd2=>{
+            Object.entries(bd2.daily_totals||{}).forEach(([dt2,v2])=>{
+              if(!dt2.startsWith(m))return;
+              if(dateFiltered&&(dt2<dfStart||dt2>dfEnd))return;
+              if(!mdRows[dt2])mdRows[dt2]={net:0,units:0,mrp:0,gross:0,adSpend:0,adSales:0};
+              mdRows[dt2].adSpend+=v2.spend||0;mdRows[dt2].adSales+=v2.sales||0;
+            });
+          });
+          Object.entries(mdRows).sort((a,b)=>a[0]<b[0]?-1:1).forEach(([dt2,v2])=>{
+            const dAsp=v2.units>0?Math.round(v2.net/v2.units):0;
+            const dDisc=v2.mrp>0?((1-v2.gross/v2.mrp)*100):0;
+            const dTacos=v2.net>0?(v2.adSpend/v2.net*100):0;
+            const dOrg=Math.max(0,v2.net-v2.adSales);
+            const dOrgP=v2.net>0?(dOrg/v2.net*100):0;
+            const dayN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(dt2+'T00:00:00').getDay()];
+            const isWk=dayN==='Sat'||dayN==='Sun';
+            o+=`<tr style="background:${isWk?'rgba(167,139,250,.06)':'rgba(0,0,0,.15)'};font-size:10px">`;
+            o+=`<td style="padding-left:24px;color:var(--muted);font-family:var(--mono)">${dt2.slice(5)} <span style="color:${isWk?'var(--purple)':'var(--dim)'}"> ${dayN}</span></td>`;
+            o+=`<td class="r" style="color:var(--green)">${fmt(v2.net)}</td><td></td>`;
+            o+=`<td class="r" style="color:var(--dim)">${fmt(v2.mrp)}</td>`;
+            o+=`<td class="c" style="color:var(--cyan)">${dDisc>0?dDisc.toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="r" style="color:var(--amber)">${v2.adSpend>0?fmt(v2.adSpend):'—'}</td>`;
+            o+=`<td class="r" style="color:var(--blue)">${v2.adSales>0?fmt(v2.adSales):'—'}</td>`;
+            o+=`<td class="c" style="color:${dTacos<=12?'var(--green)':dTacos<=18?'var(--amber)':'var(--red)'}">${dTacos>0?dTacos.toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="c" style="color:${acC(v2.adSales>0?(v2.adSpend/v2.adSales*100):0)}">${v2.adSales>0?(v2.adSpend/v2.adSales*100).toFixed(1)+'%':'—'}</td>`;
+            o+=`<td class="r" style="color:var(--green2)">${fmt(dOrg)}</td>`;
+            o+=`<td class="c" style="color:var(--green2)">${dOrgP>0?dOrgP.toFixed(0)+'%':'—'}</td>`;
+            o+=`<td class="r">${fN(v2.units)}</td>`;
+            o+=`<td class="r">₹${dAsp}</td>`;
+            o+=`<td class="r">${fmt(v2.net)}</td><td class="r">${fN(v2.units)}</td></tr>`;
+          });
+        }
       });
       // Total
       const tDisc=tMrp>0?((1-tGross/tMrp)*100):0;const tTacos=tNet>0?(tAdSpend/tNet*100):0;const tAcos=tAdSales>0?(tAdSpend/tAdSales*100):0;
@@ -1148,7 +1214,7 @@ function render(){
           o+=`<tr class="asin-drill-row"><td colspan="${colSpan}">`;
           o+=`<div class="asin-drill-panel">`;
           o+=`<div class="drill-hdr">`;
-          o+=`<div class="drill-title"><img src="https://m.media-amazon.com/images/P/${a.asin.toUpperCase()}._SL75_.jpg" onerror="this.style.display='none'" style="width:40px;height:40px;border-radius:5px;background:var(--card2)"><div><span>${a.title||a.sku||a.asin}</span><div style="display:flex;gap:8px;margin-top:2px"><span style="font-size:9px;font-family:var(--mono);color:var(--muted)">${a.asin}</span><span style="font-size:9px;font-weight:600;color:${{BA:'var(--purple)',CAP:'var(--cyan)',SS:'var(--amber)'}[a.brandShort]||'var(--muted)'}">${a.brandShort}</span><span style="font-size:9px;color:var(--dim)">${a.category||''}</span></div></div></div>`;
+          o+=`<div class="drill-title"><img src="https://m.media-amazon.com/images/P/${a.asin.toUpperCase()}._SL32_.jpg" onerror="this.style.display='none'" style="width:28px;height:28px;border-radius:4px;background:var(--card2)"><span>${a.title||a.sku||a.asin}</span><span style="font-size:9px;font-family:var(--mono);color:var(--muted)">${a.asin}</span></div>`;
           o+=`<div style="display:flex;align-items:center;gap:8px">`;
           o+=`<div class="drill-toggle"><button class="drill-toggle-btn${S.bizDrillMode==='daily'?' on':''}" onclick="event.stopPropagation();S.bizDrillMode='daily';renderDrill('${a.asin}')">Daily</button><button class="drill-toggle-btn${S.bizDrillMode==='monthly'?' on':''}" onclick="event.stopPropagation();S.bizDrillMode='monthly';renderDrill('${a.asin}')">Monthly</button></div>`;
           o+=`<button class="drill-close" onclick="event.stopPropagation();S.bizDrill=null;render()">✕</button>`;
@@ -1158,60 +1224,39 @@ function render(){
           const drlSa=(()=>{for(const bn of Object.keys(S.sales.brands||{})){const bd=S.sales.brands[bn];const x=(bd.asins||[]).find(x=>x.asin===a.asin);if(x)return x;}return null;})();
           const drlAd=(()=>{let found=null;getFiltBD().forEach(bd=>{(bd.products||[]).forEach(r=>{if(r.asin===a.asin)found=r;});});return found;})();
           
-          // Build merged daily map (now with impr + mrp + gross)
+          // Build merged daily map
           const drlDays={};
+          // Only include dates within current filter range
           const drlDF=!isDateAll();const{start:drlS,end:drlE}=drlDF?getDateRange():{start:'2000-01-01',end:'9999-12-31'};
-          if(drlSa&&drlSa.daily){Object.entries(drlSa.daily).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,hasSales:false,hasAd:false};drlDays[d].net+=v.net||0;drlDays[d].units+=v.units||0;drlDays[d].mrp+=v.mrp||0;drlDays[d].gross+=v.gross||0;drlDays[d].hasSales=true;});}
-          if(drlAd&&drlAd.days){Object.entries(drlAd.days).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,hasSales:false,hasAd:false};drlDays[d].spend+=v.spend||0;drlDays[d].adSales+=v.sales||0;drlDays[d].clicks+=v.clicks||0;drlDays[d].impr+=v.impr||0;drlDays[d].hasAd=true;});}
+          if(drlSa&&drlSa.daily){Object.entries(drlSa.daily).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,hasSales:false,hasAd:false};drlDays[d].net+=v.net||0;drlDays[d].units+=v.units||0;drlDays[d].hasSales=true;});}
+          if(drlAd&&drlAd.days){Object.entries(drlAd.days).forEach(([d,v])=>{if(d<drlS||d>drlE)return;if(!drlDays[d])drlDays[d]={net:0,units:0,spend:0,adSales:0,clicks:0,hasSales:false,hasAd:false};drlDays[d].spend+=v.spend||0;drlDays[d].adSales+=v.sales||0;drlDays[d].clicks+=v.clicks||0;drlDays[d].hasAd=true;});}
           
           const sortedDays=Object.entries(drlDays).sort((a,b)=>a[0]<b[0]?-1:1);
           
           // Monthly rollup
           const drlMonths={};
-          sortedDays.forEach(([d,v])=>{const m=d.slice(0,7);if(!drlMonths[m])drlMonths[m]={net:0,units:0,spend:0,adSales:0,clicks:0,impr:0,mrp:0,gross:0,days:0};const mo=drlMonths[m];mo.net+=v.net;mo.units+=v.units;mo.spend+=v.spend;mo.adSales+=v.adSales;mo.clicks+=v.clicks;mo.impr+=v.impr;mo.mrp+=v.mrp;mo.gross+=v.gross;mo.days++;});
+          sortedDays.forEach(([d,v])=>{const m=d.slice(0,7);if(!drlMonths[m])drlMonths[m]={net:0,units:0,spend:0,adSales:0,clicks:0,days:0};const mo=drlMonths[m];mo.net+=v.net;mo.units+=v.units;mo.spend+=v.spend;mo.adSales+=v.adSales;mo.clicks+=v.clicks;mo.days++;});
           
           const isMonthly=S.bizDrillMode==='monthly'||(S.bizDrillMode!=='daily'&&!drlDF);
           const pts=isMonthly?Object.entries(drlMonths).sort((a,b)=>a[0]<b[0]?-1:1):sortedDays;
           
-          // Compute KPIs from daily data (so they respect date filter)
-          let dNet=0,dUnits=0,dSpend=0,dAdSales=0,dClicks=0,dImpr=0,dMrp=0,dGross=0;
-          sortedDays.forEach(([,v])=>{dNet+=v.net;dUnits+=v.units;dSpend+=v.spend;dAdSales+=v.adSales;dClicks+=v.clicks;dImpr+=v.impr;dMrp+=v.mrp;dGross+=v.gross;});
-          const dTacos=dNet>0?(dSpend/dNet*100):0;
-          const dAcos=dAdSales>0?(dSpend/dAdSales*100):0;
-          const dOrg=Math.max(0,dNet-dAdSales);
-          const dOrgPct=dNet>0?(dOrg/dNet*100):0;
-          const dCvr=dClicks>0?(dUnits/dClicks*100):0;
-          const dCpc=dClicks>0?(dSpend/dClicks):0;
-          const dCtr=dImpr>0?(dClicks/dImpr*100):0;
-          const dAsp=dUnits>0?(dNet/dUnits):0;
-          const dDisc=dMrp>0?(1-dGross/dMrp)*100:0;
-          const numDays=sortedDays.length||1;
-          const dDrrU=dUnits/numDays;
-          const dDrrR=dNet/numDays;
-          
-          // ── ROW 1: Primary KPIs ──
+          // KPIs
+          const dTacos=a.net>0?(a.adSpend/a.net*100):0;
+          const dAcos=a.adSales>0?(a.adSpend/a.adSales*100):0;
+          const dOrg=Math.max(0,a.net-a.adSales);
+          const dCvr=a.adSales>0&&a.units>0?(a.units/a.clicks*100):0;
+          const dCpc=a.clicks>0?(a.adSpend/a.clicks):0;
           o+=`<div class="drill-kpis">`;
-          o+=`<div class="dk"><div class="lb">Net Sales</div><div class="vl" style="color:var(--green)">${fmt(dNet)}</div></div>`;
-          o+=`<div class="dk"><div class="lb">Units</div><div class="vl">${fN(dUnits)}</div></div>`;
-          o+=`<div class="dk"><div class="lb">ASP</div><div class="vl">₹${dAsp>0?Math.round(dAsp):0}</div></div>`;
-          o+=`<div class="dk"><div class="lb">DRR Units</div><div class="vl">${dDrrU>0?dDrrU.toFixed(0):'—'}</div></div>`;
-          o+=`<div class="dk"><div class="lb">DRR Rev</div><div class="vl" style="color:var(--green)">${fmt(Math.round(dDrrR))}</div></div>`;
-          o+=`<div class="dk"><div class="lb">Disc %</div><div class="vl" style="color:var(--cyan)">${dDisc>0?dDisc.toFixed(1)+'%':'—'}</div></div>`;
-          o+=`<div class="dk"><div class="lb">${numDays}d Period</div><div class="vl" style="color:var(--dim);font-size:10px">${sortedDays.length>0?sortedDays[0][0].slice(5):''} → ${sortedDays.length>0?sortedDays[sortedDays.length-1][0].slice(5):''}</div></div>`;
-          o+=`</div>`;
-          
-          // ── ROW 2: Ad KPIs ──
-          o+=`<div class="drill-kpis">`;
-          o+=`<div class="dk"><div class="lb">Ad Spend</div><div class="vl" style="color:var(--amber)">${fmt(dSpend)}</div></div>`;
-          o+=`<div class="dk"><div class="lb">Ad Sales</div><div class="vl" style="color:var(--blue)">${fmt(dAdSales)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Net Sales</div><div class="vl" style="color:var(--green)">${fmt(a.net)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Units</div><div class="vl">${fN(a.units)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Ad Spend</div><div class="vl" style="color:var(--amber)">${fmt(a.adSpend)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Ad Sales</div><div class="vl" style="color:var(--blue)">${fmt(a.adSales)}</div></div>`;
           o+=`<div class="dk"><div class="lb">TACOS</div><div class="vl" style="color:${dTacos<=12?'var(--green)':dTacos<=18?'var(--amber)':'var(--red)'}">${dTacos>0?dTacos.toFixed(1)+'%':'—'}</div></div>`;
           o+=`<div class="dk"><div class="lb">ACOS</div><div class="vl" style="color:${acC(dAcos)}">${dAcos>0?dAcos.toFixed(1)+'%':'—'}</div></div>`;
-          o+=`<div class="dk"><div class="lb">Organic</div><div class="vl" style="color:var(--green2)">${fmt(dOrg)} <span style="font-size:9px;font-weight:400">(${dOrgPct.toFixed(0)}%)</span></div></div>`;
-          o+=`<div class="dk"><div class="lb">CPC / CTR</div><div class="vl" style="font-size:11px">₹${dCpc>0?dCpc.toFixed(1):'—'} / ${dCtr>0?dCtr.toFixed(1)+'%':'—'}</div></div>`;
-          o+=`<div class="dk"><div class="lb">CVR / Clicks</div><div class="vl" style="font-size:11px">${dCvr>0?dCvr.toFixed(1)+'%':'—'} / ${fN(dClicks)}</div></div>`;
+          o+=`<div class="dk"><div class="lb">Organic</div><div class="vl" style="color:var(--green2)">${fmt(dOrg)}</div></div>`;
           o+=`</div>`;
           
-          // ── Charts row ──
+          // Chart canvases — one row of 3 charts
           const cId=a.asin.replace(/[^a-z0-9]/gi,'');
           o+=`<div class="drill-charts">`;
           o+=`<div class="drill-chart-wrap"><div class="drill-chart-label">DRR Units & Net Sales</div><div style="position:relative;height:140px"><canvas id="dc_sales_${cId}"></canvas></div></div>`;
@@ -1219,43 +1264,12 @@ function render(){
           o+=`<div class="drill-chart-wrap"><div class="drill-chart-label">CVR % & ACOS %</div><div style="position:relative;height:140px"><canvas id="dc_rates_${cId}"></canvas></div></div>`;
           o+=`</div>`;
           
-          // ── Revenue Split + Daily Table ──
-          o+=`<div class="drill-split">`;
-          // Doughnut: Ad Sales vs Organic
-          o+=`<div class="drill-split-card"><div class="drill-chart-label">Revenue Split</div><div style="position:relative;height:160px"><canvas id="dc_pie_${cId}"></canvas></div></div>`;
-          // Daily data table
-          o+=`<div class="drill-split-card" style="padding:0"><div style="padding:8px 12px 4px"><span class="drill-chart-label">Daily Breakdown</span></div>`;
-          o+=`<div class="drill-daily-wrap"><table><thead><tr>`;
-          o+=`<th class="l">Date</th><th class="r">Net Sales</th><th class="r">Units</th><th class="r">ASP</th><th class="r">Ad Spend</th><th class="r">Ad Sales</th><th class="c">TACOS</th><th class="c">ACOS</th><th class="r">Organic</th><th class="c">Org%</th>`;
-          o+=`</tr></thead><tbody>`;
-          // Show daily rows (newest first)
-          const tblDays=[...sortedDays].reverse();
-          tblDays.forEach(([d,v])=>{
-            const tNet=v.net;const tUnits=v.units;const tSpend=v.spend;const tAdS=v.adSales;
-            const tTacos=tNet>0?(tSpend/tNet*100):0;const tAcos=tAdS>0?(tSpend/tAdS*100):0;
-            const tOrg=Math.max(0,tNet-tAdS);const tOrgP=tNet>0?(tOrg/tNet*100):0;
-            const tAsp=tUnits>0?Math.round(tNet/tUnits):0;
-            o+=`<tr>`;
-            o+=`<td style="color:var(--muted)">${d.slice(5)}</td>`;
-            o+=`<td class="r" style="color:var(--green)">${tNet>0?fmt(tNet):'—'}</td>`;
-            o+=`<td class="r">${tUnits||'—'}</td>`;
-            o+=`<td class="r">₹${tAsp||'—'}</td>`;
-            o+=`<td class="r" style="color:var(--amber)">${tSpend>0?fmt(tSpend):'—'}</td>`;
-            o+=`<td class="r" style="color:var(--blue)">${tAdS>0?fmt(tAdS):'—'}</td>`;
-            o+=`<td class="c" style="color:${tTacos<=12?'var(--green)':tTacos<=18?'var(--amber)':'var(--red)'}">${tTacos>0?tTacos.toFixed(1)+'%':'—'}</td>`;
-            o+=`<td class="c" style="color:${acC(tAcos)}">${tAcos>0?tAcos.toFixed(1)+'%':'—'}</td>`;
-            o+=`<td class="r" style="color:var(--green2)">${tOrg>0?fmt(tOrg):'—'}</td>`;
-            o+=`<td class="c" style="color:var(--green2)">${tOrgP>0?tOrgP.toFixed(0)+'%':'—'}</td>`;
-            o+=`</tr>`;
-          });
-          o+=`</tbody></table></div></div>`;
-          o+=`</div>`; // end drill-split
-          
           // Serialize chart data inline
           const chartLabels=JSON.stringify(pts.map(([d])=>isMonthly?d:d.slice(5)));
           const chartUnits=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?+(v.units/v.days).toFixed(1):null):+(v.units).toFixed(0)));
           const chartNet=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?Math.round(v.net/v.days):null):Math.round(v.net)));
           const chartSpend=JSON.stringify(pts.map(([,v])=>isMonthly?(v.days>0?Math.round(v.spend/v.days):null):(v.spend>0?Math.round(v.spend):null)));
+          // Rate metrics: only compute when BOTH numerator and denominator exist; null otherwise to avoid spike artifacts
           const chartTacos=JSON.stringify(pts.map(([,v])=>{const n=isMonthly?v.net:v.net;const s=isMonthly?v.spend:v.spend;return(n>100&&s>0)?+(s/n*100).toFixed(1):null;}));
           const chartCvr=JSON.stringify(pts.map(([,v])=>v.clicks>=3&&v.units>0?+(v.units/v.clicks*100).toFixed(1):null));
           const chartAcos=JSON.stringify(pts.map(([,v])=>{const as=isMonthly?v.adSales:v.adSales;const s=isMonthly?v.spend:v.spend;const ac=as>100&&s>0?+(s/as*100).toFixed(1):null;return(ac&&ac<500)?ac:null;}));
@@ -1269,9 +1283,7 @@ function render(){
             spend:chartSpend,
             tacos:chartTacos,
             cvr:chartCvr,
-            acos:chartAcos,
-            adSalesTotal:JSON.stringify(Math.round(dAdSales)),
-            organicTotal:JSON.stringify(Math.round(dOrg))
+            acos:chartAcos
           };
           
           o+=`</div></td></tr>`;
@@ -1279,7 +1291,184 @@ function render(){
         // ── END DRILL-DOWN ──
       });
       o+=`</tbody></table></div></div>`;
+      
+      // ═══ SKU INSIGHTS — Brand/Generic/Comp Spend Analysis ═══
+      const insightAsins=asinRowsB.filter(a=>a.adSpend>0).map(a=>{
+        const ts=typeSplits[a.asin]||{brand:0,generic:0,comp:0};
+        const tsT=ts.brand+ts.generic+ts.comp;
+        return{...a,tsBrand:ts.brand,tsGeneric:ts.generic,tsComp:ts.comp,tsTotal:tsT,
+          brandPct:tsT>0?(ts.brand/tsT*100):0,genPct:tsT>0?(ts.generic/tsT*100):0,compPct:tsT>0?(ts.comp/tsT*100):0};
+      });
+      const topBrand=insightAsins.filter(a=>a.tsBrand>0).sort((a,b)=>b.tsBrand-a.tsBrand).slice(0,5);
+      const topGen=insightAsins.filter(a=>a.tsGeneric>0).sort((a,b)=>b.tsGeneric-a.tsGeneric).slice(0,5);
+      const topComp=insightAsins.filter(a=>a.tsComp>0).sort((a,b)=>b.tsComp-a.tsComp).slice(0,5);
+      const heavyBrand=insightAsins.filter(a=>a.brandPct>60&&a.tsTotal>500);
+      const heavyGen=insightAsins.filter(a=>a.genPct>50&&a.tsTotal>500);
+      const lowDiscovery=insightAsins.filter(a=>a.genPct<15&&a.tsTotal>1000);
+      
+      o+=`<div class="sec" style="margin-top:16px"><div class="sec-title">SKU Insights — Ad Spend Mix <span style="font-size:9px;color:var(--dim);font-weight:400">${insightAsins.length} ASINs with ad spend</span></div>`;
+      
+      // Insight cards row
+      o+=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:12px">`;
+      
+      // Top Brand Spenders
+      o+=`<div style="background:var(--card);border-radius:7px;border:1px solid var(--border);padding:12px">`;
+      o+=`<div style="font-size:9px;font-weight:600;color:#f59e0b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🛡️ Top Brand Spend</div>`;
+      if(topBrand.length){topBrand.forEach(a=>{
+        o+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #1a1a24">`;
+        o+=`<span style="font-size:9px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}">${a.title||a.asin}</span>`;
+        o+=`<span style="font-size:9px;font-family:var(--mono);color:#f59e0b">${fmt(a.tsBrand)} <span style="color:var(--dim)">(${a.brandPct.toFixed(0)}%)</span></span>`;
+        o+=`</div>`;
+      });}else{o+=`<div style="font-size:9px;color:var(--dim)">No brand spend</div>`;}
+      o+=`</div>`;
+      
+      // Top Generic Spenders
+      o+=`<div style="background:var(--card);border-radius:7px;border:1px solid var(--border);padding:12px">`;
+      o+=`<div style="font-size:9px;font-weight:600;color:#3b82f6;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">🔍 Top Generic Spend</div>`;
+      if(topGen.length){topGen.forEach(a=>{
+        o+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #1a1a24">`;
+        o+=`<span style="font-size:9px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}">${a.title||a.asin}</span>`;
+        o+=`<span style="font-size:9px;font-family:var(--mono);color:#3b82f6">${fmt(a.tsGeneric)} <span style="color:var(--dim)">(${a.genPct.toFixed(0)}%)</span></span>`;
+        o+=`</div>`;
+      });}else{o+=`<div style="font-size:9px;color:var(--dim)">No generic spend</div>`;}
+      o+=`</div>`;
+      
+      // Top Comp Spenders
+      o+=`<div style="background:var(--card);border-radius:7px;border:1px solid var(--border);padding:12px">`;
+      o+=`<div style="font-size:9px;font-weight:600;color:#ef4444;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">⚔️ Top Competitor Spend</div>`;
+      if(topComp.length){topComp.forEach(a=>{
+        o+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:3px 0;border-bottom:1px solid #1a1a24">`;
+        o+=`<span style="font-size:9px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}">${a.title||a.asin}</span>`;
+        o+=`<span style="font-size:9px;font-family:var(--mono);color:#ef4444">${fmt(a.tsComp)} <span style="color:var(--dim)">(${a.compPct.toFixed(0)}%)</span></span>`;
+        o+=`</div>`;
+      });}else{o+=`<div style="font-size:9px;color:var(--dim)">No competitor spend</div>`;}
+      o+=`</div>`;
+      o+=`</div>`; // end grid
+      
+      // Alerts row
+      if(heavyBrand.length||lowDiscovery.length){
+        o+=`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">`;
+        if(heavyBrand.length){o+=`<div style="background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px 12px;font-size:9px"><span style="color:#f59e0b;font-weight:600">⚠️ ${heavyBrand.length} SKU${heavyBrand.length>1?'s':''} with >60% brand spend</span> — <span style="color:var(--muted)">over-defending branded terms: ${heavyBrand.map(a=>a.title?.split(' ').slice(0,4).join(' ')||a.asin).join(', ')}</span></div>`;}
+        if(lowDiscovery.length){o+=`<div style="background:rgba(59,130,246,.08);border:1px solid rgba(59,130,246,.2);border-radius:6px;padding:8px 12px;font-size:9px"><span style="color:#3b82f6;font-weight:600">💡 ${lowDiscovery.length} SKU${lowDiscovery.length>1?'s':''} with <15% generic spend</span> — <span style="color:var(--muted)">low discovery investment: ${lowDiscovery.map(a=>a.title?.split(' ').slice(0,4).join(' ')||a.asin).join(', ')}</span></div>`;}
+        o+=`</div>`;
+      }
+      
+      // Full breakdown table
+      o+=`<div class="tbl-wrap" style="max-height:300px"><table class="tbl"><thead><tr>`;
+      o+=`<th>PRODUCT</th><th class="c">BR</th><th class="r">TOTAL AD SPEND</th><th class="r" style="color:#f59e0b">BRAND ₹</th><th class="c" style="color:#f59e0b">BR%</th><th class="r" style="color:#3b82f6">GENERIC ₹</th><th class="c" style="color:#3b82f6">GEN%</th><th class="r" style="color:#ef4444">COMP ₹</th><th class="c" style="color:#ef4444">CMP%</th><th class="c">TACOS</th><th class="c">ACOS</th>`;
+      o+=`</tr></thead><tbody>`;
+      insightAsins.sort((a,b)=>b.tsTotal-a.tsTotal).slice(0,30).forEach(a=>{
+        const tacos=a.net>0?(a.adSpend/a.net*100):0;
+        const acos=a.adSales>0?(a.adSpend/a.adSales*100):0;
+        // Color the dominant type
+        const maxType=a.brandPct>=a.genPct&&a.brandPct>=a.compPct?'b':a.genPct>=a.compPct?'g':'c';
+        o+=`<tr>`;
+        o+=`<td style="font-size:9px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${a.title}">${a.title||a.asin}</td>`;
+        o+=`<td class="c"><span style="font-size:9px;font-weight:600;color:${{BA:'var(--purple)',CAP:'var(--cyan)',SS:'var(--amber)'}[a.brandShort]||'var(--muted)'}">${a.brandShort}</span></td>`;
+        o+=`<td class="r">${fmt(a.tsTotal)}</td>`;
+        o+=`<td class="r" style="color:#f59e0b">${a.tsBrand>0?fmt(a.tsBrand):'—'}</td>`;
+        o+=`<td class="c"><span style="font-size:9px;${maxType==='b'?'font-weight:700;color:#f59e0b':'color:var(--muted)'}">${a.brandPct>0?a.brandPct.toFixed(0)+'%':'—'}</span></td>`;
+        o+=`<td class="r" style="color:#3b82f6">${a.tsGeneric>0?fmt(a.tsGeneric):'—'}</td>`;
+        o+=`<td class="c"><span style="font-size:9px;${maxType==='g'?'font-weight:700;color:#3b82f6':'color:var(--muted)'}">${a.genPct>0?a.genPct.toFixed(0)+'%':'—'}</span></td>`;
+        o+=`<td class="r" style="color:#ef4444">${a.tsComp>0?fmt(a.tsComp):'—'}</td>`;
+        o+=`<td class="c"><span style="font-size:9px;${maxType==='c'?'font-weight:700;color:#ef4444':'color:var(--muted)'}">${a.compPct>0?a.compPct.toFixed(0)+'%':'—'}</span></td>`;
+        o+=`<td class="c" style="color:${tacos<=12?'var(--green)':tacos<=18?'var(--amber)':'var(--red)'}">${tacos>0?tacos.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="c" style="color:${acC(acos)}">${acos>0?acos.toFixed(1)+'%':'—'}</td>`;
+        o+=`</tr>`;
+      });
+      o+=`</tbody></table></div></div>`;
     }
+    
+    // ═══ DAILY REVENUE BREAKDOWN ═══ (cross-check with Seller Central)
+    const bizDateFiltered=S.datePeriod!=='all'&&S.dateStart&&S.dateEnd;
+    const{start:bizDfStart,end:bizDfEnd}=bizDateFiltered?getDateRange():{start:'2000-01-01',end:'9999-12-31'};
+    const bizDaily={};
+    // Aggregate sales daily from all brands' ASINs
+    Object.entries(S.sales.brands||{}).forEach(([bn,sbd])=>{
+      // Brand filter
+      if(!isBrandAll()&&!S.brands.has(bn))return;
+      (sbd.asins||[]).forEach(sa=>{
+        // Category filter
+        if(S.catFilter&&S.catFilter!=='all'){const info=getAsinInfo(sa.asin);if(info.c!==S.catFilter)return;}
+        Object.entries(sa.daily||{}).forEach(([dt,v])=>{
+          if(bizDateFiltered&&(dt<bizDfStart||dt>bizDfEnd))return;
+          if(!bizDaily[dt])bizDaily[dt]={net:0,units:0,mrp:0,gross:0,adSpend:0,adSales:0};
+          bizDaily[dt].net+=v.net||0;bizDaily[dt].units+=v.units||0;
+          bizDaily[dt].mrp+=v.mrp||0;bizDaily[dt].gross+=v.gross||0;
+        });
+      });
+    });
+    // Merge ads daily_totals
+    const ct3=S.campType||'all';
+    bds.forEach(bd=>{
+      if(!isBrandAll()&&!S.brands.has(bd.brand))return;
+      const fdt=filterDailyTotals(bd.daily_totals||{});
+      Object.entries(fdt).forEach(([dt,v])=>{
+        if(!bizDaily[dt])bizDaily[dt]={net:0,units:0,mrp:0,gross:0,adSpend:0,adSales:0};
+        bizDaily[dt].adSpend+=v.spend||0;bizDaily[dt].adSales+=v.sales||0;
+      });
+    });
+    const bizDailySorted=Object.entries(bizDaily).sort((a,b)=>a[0]>b[0]?-1:1);
+    if(bizDailySorted.length){
+      const bdt={net:0,units:0,adSpend:0,adSales:0};
+      bizDailySorted.forEach(([,v])=>{bdt.net+=v.net;bdt.units+=v.units;bdt.adSpend+=v.adSpend;bdt.adSales+=v.adSales;});
+      o+=`<div class="sec" style="margin-top:16px"><div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">Daily Revenue Breakdown (${bizDailySorted.length} days)<span style="font-size:9px;color:var(--dim);font-weight:400">Cross-check with Seller Central</span></div>`;
+      o+=`<div class="tbl-wrap" style="max-height:350px"><table class="tbl"><thead><tr>`;
+      o+=`<th>DATE</th><th class="c">DAY</th><th class="r">NET SALES</th><th class="r">UNITS</th><th class="r">ASP</th><th class="c">DISC%</th><th class="r">AD SPEND</th><th class="r">AD SALES</th><th class="c">TACOS</th><th class="r">ORGANIC</th><th class="c">ORG%</th><th class="r">DRR REV</th><th class="r">DRR UNITS</th>`;
+      o+=`</tr></thead><tbody>`;
+      // Running avg for DRR
+      let cumNet=0,cumUnits=0,dayIdx=0;
+      const sortedAsc=[...bizDailySorted].reverse();
+      const drrMap={};
+      sortedAsc.forEach(([d,v])=>{dayIdx++;cumNet+=v.net;cumUnits+=v.units;drrMap[d]={rev:Math.round(cumNet/dayIdx),units:Math.round(cumUnits/dayIdx)};});
+      
+      bizDailySorted.forEach(([d,v])=>{
+        const asp=v.units>0?Math.round(v.net/v.units):0;
+        const disc=v.mrp>0?((1-v.gross/v.mrp)*100):0;
+        const tacos=v.net>0?(v.adSpend/v.net*100):0;
+        const organic=Math.max(0,v.net-v.adSales);
+        const orgPct=v.net>0?(organic/v.net*100):0;
+        const drr=drrMap[d]||{rev:0,units:0};
+        const dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T00:00:00').getDay()];
+        const isWeekend=dayName==='Sat'||dayName==='Sun';
+        o+=`<tr style="${isWeekend?'background:rgba(167,139,250,.04)':''}">`;
+        o+=`<td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${d}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:${isWeekend?'var(--purple)':'var(--dim)'}">${dayName}</td>`;
+        o+=`<td class="r" style="color:var(--green);font-weight:600">${fmt(v.net)}</td>`;
+        o+=`<td class="r">${fN(v.units)}</td>`;
+        o+=`<td class="r" style="font-size:9px">₹${asp}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--cyan)">${disc>0?disc.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--amber)">${v.adSpend>0?fmt(v.adSpend):'—'}</td>`;
+        o+=`<td class="r" style="color:var(--blue)">${v.adSales>0?fmt(v.adSales):'—'}</td>`;
+        o+=`<td class="c" style="color:${tacos<=12?'var(--green)':tacos<=18?'var(--amber)':'var(--red)'}">${tacos>0?tacos.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r" style="color:var(--green2)">${fmt(organic)}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:var(--green2)">${orgPct>0?orgPct.toFixed(0)+'%':'—'}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fmt(drr.rev)}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fN(drr.units)}</td>`;
+        o+=`</tr>`;
+      });
+      // Total row
+      const tAsp=bdt.units>0?Math.round(bdt.net/bdt.units):0;
+      const tTacos=bdt.net>0?(bdt.adSpend/bdt.net*100):0;
+      const tOrg=Math.max(0,bdt.net-bdt.adSales);
+      const tOrgPct=bdt.net>0?(tOrg/bdt.net*100):0;
+      const tDrrR=bizDailySorted.length>0?Math.round(bdt.net/bizDailySorted.length):0;
+      const tDrrU=bizDailySorted.length>0?Math.round(bdt.units/bizDailySorted.length):0;
+      o+=`<tr style="background:var(--card2);font-weight:700;border-top:2px solid var(--border)">`;
+      o+=`<td style="font-size:10px">TOTAL / AVG</td><td></td>`;
+      o+=`<td class="r" style="color:var(--green)">${fmt(bdt.net)}</td>`;
+      o+=`<td class="r">${fN(bdt.units)}</td>`;
+      o+=`<td class="r" style="font-size:9px">₹${tAsp}</td><td></td>`;
+      o+=`<td class="r" style="color:var(--amber)">${fmt(bdt.adSpend)}</td>`;
+      o+=`<td class="r" style="color:var(--blue)">${fmt(bdt.adSales)}</td>`;
+      o+=`<td class="c" style="color:${tTacos<=12?'var(--green)':tTacos<=18?'var(--amber)':'var(--red)'}">${tTacos.toFixed(1)}%</td>`;
+      o+=`<td class="r" style="color:var(--green2)">${fmt(tOrg)}</td>`;
+      o+=`<td class="c" style="font-size:9px;color:var(--green2)">${tOrgPct.toFixed(0)}%</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fmt(tDrrR)}</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fN(tDrrU)}</td>`;
+      o+=`</tr></tbody></table></div></div>`;
+    }
+    
     // End business page — skip to DOM update
   } else {
   // ═══ ADS INTELLIGENCE PAGE ═══
@@ -1405,6 +1594,72 @@ function render(){
     o+=`<td class="c" style="font-family:var(--mono);font-size:10px">${pct(sC)}</td>`;
     o+=`<td class="r" style="font-family:var(--mono);font-size:10px">₹${sCac>0?sCac.toFixed(0):'—'}</td><td></td></tr>`;
     o+=`</tbody></table></div></div>`;
+    
+    // ── DAILY SPEND BREAKDOWN ── (cross-check with Amazon console)
+    const dailyRows={};
+    const ct2=S.campType||'all';
+    bds.forEach(bd=>{
+      const fdt=filterDailyTotals(bd.daily_totals||{});
+      Object.entries(fdt).forEach(([d,v])=>{
+        if(!dailyRows[d])dailyRows[d]={spend:0,sales:0,clicks:0,impr:0,units:0,sp_spend:0,sd_spend:0,sb_spend:0,sp_sales:0,sd_sales:0,sb_sales:0};
+        const r=dailyRows[d];
+        if(ct2==='sp'){r.spend+=v.sp_spend||0;r.sales+=v.sp_sales||0;}
+        else if(ct2==='sd'){r.spend+=v.sd_spend||0;r.sales+=v.sd_sales||0;}
+        else if(ct2==='sb'){r.spend+=v.sb_spend||0;r.sales+=v.sb_sales||0;}
+        else{r.spend+=v.spend||0;r.sales+=v.sales||0;}
+        r.clicks+=v.clicks||0;r.impr+=v.impr||0;r.units+=v.units||0;
+        r.sp_spend+=v.sp_spend||0;r.sd_spend+=v.sd_spend||0;r.sb_spend+=v.sb_spend||0;
+        r.sp_sales+=v.sp_sales||0;r.sd_sales+=v.sd_sales||0;r.sb_sales+=v.sb_sales||0;
+      });
+    });
+    const dailySorted=Object.entries(dailyRows).sort((a,b)=>a[0]>b[0]?-1:1);
+    if(dailySorted.length){
+      const dTotal={spend:0,sales:0,clicks:0,impr:0,units:0,sp:0,sd:0,sb:0};
+      dailySorted.forEach(([,v])=>{dTotal.spend+=v.spend;dTotal.sales+=v.sales;dTotal.clicks+=v.clicks;dTotal.impr+=v.impr;dTotal.units+=v.units;dTotal.sp+=v.sp_spend;dTotal.sd+=v.sd_spend;dTotal.sb+=v.sb_spend;});
+      o+=`<div class="sec" style="margin-top:12px"><div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">Daily Spend Breakdown (${dailySorted.length} days)<span style="font-size:9px;color:var(--dim);font-weight:400">Cross-check with Amazon Console</span></div>`;
+      o+=`<div class="tbl-wrap" style="max-height:320px"><table class="tbl"><thead><tr>`;
+      o+=`<th>DATE</th><th class="c">DAY</th><th class="r">SPEND</th><th class="r" style="color:var(--purple)">SP</th><th class="r" style="color:var(--cyan)">SD</th><th class="r" style="color:var(--amber)">SB</th><th class="r">SALES</th><th class="c">ACOS</th><th class="r">CLICKS</th><th class="r">IMPR</th><th class="r">UNITS</th><th class="c">CPC</th><th class="c">CTR</th>`;
+      o+=`</tr></thead><tbody>`;
+      dailySorted.forEach(([d,v])=>{
+        const ac=v.sales>0?(v.spend/v.sales*100):0;
+        const cpc=v.clicks>0?(v.spend/v.clicks):0;
+        const ctr=v.impr>0?(v.clicks/v.impr*100):0;
+        const dayName=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d+'T00:00:00').getDay()];
+        const isWeekend=dayName==='Sat'||dayName==='Sun';
+        o+=`<tr style="${isWeekend?'background:rgba(167,139,250,.04)':''}">`;
+        o+=`<td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${d}</td>`;
+        o+=`<td class="c" style="font-size:9px;color:${isWeekend?'var(--purple)':'var(--dim)'}">${dayName}</td>`;
+        o+=`<td class="r" style="color:var(--amber);font-weight:600">${fmt(v.spend)}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--purple)">${v.sp_spend>0?fmt(v.sp_spend):'—'}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--cyan)">${v.sd_spend>0?fmt(v.sd_spend):'—'}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--amber)">${v.sb_spend>0?fmt(v.sb_spend):'—'}</td>`;
+        o+=`<td class="r" style="color:var(--green)">${fmt(v.sales)}</td>`;
+        o+=`<td class="c" style="color:${ac<=30?'var(--green)':ac<=50?'var(--amber)':'var(--red)'}">${ac>0?ac.toFixed(1)+'%':'—'}</td>`;
+        o+=`<td class="r">${fN(v.clicks)}</td>`;
+        o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fN(v.impr)}</td>`;
+        o+=`<td class="r">${v.units||0}</td>`;
+        o+=`<td class="c" style="font-size:9px">₹${cpc>0?cpc.toFixed(1):'—'}</td>`;
+        o+=`<td class="c" style="font-size:9px">${ctr>0?ctr.toFixed(2)+'%':'—'}</td>`;
+        o+=`</tr>`;
+      });
+      const tAcos=dTotal.sales>0?(dTotal.spend/dTotal.sales*100):0;
+      const tCpc=dTotal.clicks>0?(dTotal.spend/dTotal.clicks):0;
+      const tCtr=dTotal.impr>0?(dTotal.clicks/dTotal.impr*100):0;
+      o+=`<tr style="background:var(--card2);font-weight:700;border-top:2px solid var(--border)">`;
+      o+=`<td style="font-size:10px">TOTAL</td><td></td>`;
+      o+=`<td class="r" style="color:var(--amber)">${fmt(dTotal.spend)}</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--purple)">${fmt(dTotal.sp)}</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--cyan)">${fmt(dTotal.sd)}</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--amber)">${fmt(dTotal.sb)}</td>`;
+      o+=`<td class="r" style="color:var(--green)">${fmt(dTotal.sales)}</td>`;
+      o+=`<td class="c" style="color:${tAcos<=30?'var(--green)':tAcos<=50?'var(--amber)':'var(--red)'}">${tAcos.toFixed(1)}%</td>`;
+      o+=`<td class="r">${fN(dTotal.clicks)}</td>`;
+      o+=`<td class="r" style="font-size:9px;color:var(--dim)">${fN(dTotal.impr)}</td>`;
+      o+=`<td class="r">${fN(dTotal.units)}</td>`;
+      o+=`<td class="c" style="font-size:9px">₹${tCpc.toFixed(1)}</td>`;
+      o+=`<td class="c" style="font-size:9px">${tCtr.toFixed(2)}%</td>`;
+      o+=`</tr></tbody></table></div></div>`;
+    }
   }
 
   // ── TAB: INSIGHTS ──
@@ -1567,7 +1822,8 @@ function render(){
     let fTerms=terms;
     if(S.kwFilter==='kw')fTerms=terms.filter(x=>!/^b[0-9][a-z0-9]+$/i.test(x.keyword));
     if(S.kwFilter==='asin')fTerms=terms.filter(x=>/^b[0-9][a-z0-9]+$/i.test(x.keyword));
-    o+=`<div class="sec"><div class="sec-title">Search Terms (${fTerms.length})</div><div class="tbl-wrap"><table class="tbl"><thead><tr>`;
+    window._lastFilteredTerms=fTerms;
+    o+=`<div class="sec"><div class="sec-title" style="display:flex;justify-content:space-between;align-items:center">Search Terms (${fTerms.length})<button onclick="downloadTermsCSV()" style="font-size:9px;padding:3px 10px;border-radius:5px;border:1px solid var(--border);background:var(--card);color:var(--green);cursor:pointer;font-weight:600">⬇ CSV</button></div><div class="tbl-wrap"><table class="tbl"><thead><tr>`;
     [{k:'keyword',l:'KEYWORD'},{k:'type',l:'TYPE',c:'c'},{k:'orgRank',l:'ORG',c:'c'},{k:'spend',l:'SPEND',c:'r'},{k:'spPct',l:'SP%',c:'c'},{k:'sales',l:'SALES',c:'r'},{k:'slPct',l:'SL%',c:'c'},{k:'acos',l:'ACOS',c:'c'},{k:'burn',l:'BURN',c:'c'},{k:'clicks',l:'CLICKS',c:'r'},{k:'cpc',l:'CPC',c:'r'},{k:'units',l:'UNITS',c:'r'},{k:'cvr',l:'CVR',c:'c'}].forEach(c=>{const arr=S.sortCol===c.k?(S.sortDir>0?' ▲':' ▼'):'';o+=`<th class="${c.c||''}" onclick="setSort('${c.k}')">${c.l}${arr}</th>`;});
     o+=`<th>CAMPAIGNS</th><th class="c">MATCH</th>`;
     o+=`</tr></thead><tbody>`;
@@ -1720,10 +1976,10 @@ function render(){
   if(window._drillChartJob){
     const j=window._drillChartJob;
     window._drillChartJob=null;
-    requestAnimationFrame(()=>{requestAnimationFrame(()=>{
-      try{_mountDrillCharts(JSON.parse(j.cId),JSON.parse(j.labels),JSON.parse(j.units),JSON.parse(j.net),JSON.parse(j.spend),JSON.parse(j.tacos),JSON.parse(j.cvr),JSON.parse(j.acos),JSON.parse(j.adSalesTotal),JSON.parse(j.organicTotal));}
+    setTimeout(()=>{
+      try{_mountDrillCharts(JSON.parse(j.cId),JSON.parse(j.labels),JSON.parse(j.units),JSON.parse(j.net),JSON.parse(j.spend),JSON.parse(j.tacos),JSON.parse(j.cvr),JSON.parse(j.acos));}
       catch(e){console.warn('drill chart mount',e);}
-    });});
+    },120);
   }
   setTimeout(()=>{
     if(S.tab==='overview'){
@@ -1891,15 +2147,953 @@ window.setSkuType=function(v){S.skuTypeFilter=v;S.termType=v==='all'?'all':v;ren
 window.swapChart=function(dir){S.chartIdx=((S.chartIdx||0)+dir+4)%4;render()};
 window.setCustom=function(w,v){if(w==='start')S.dateStart=v;else S.dateEnd=v;if(S.dateStart&&S.dateEnd)render();};
 
+// ═══════════════════════════════════════════════════════════════
+// REVENUE RUN-RATE DASHBOARD — Power BI style with Day-Range filter
+// ═══════════════════════════════════════════════════════════════
+const CAT_COLORS={
+  'Shampoo':'#3b82f6','Hair Serum':'#8b5cf6','Hair Spray':'#10b981','Hair Mask':'#f59e0b',
+  'Conditioner':'#ec4899','Leave in conditioner':'#14b8a6','Cover up':'#6366f1','Combo':'#f97316',
+  'Hair Oil':'#22d3ee','Scalp Spray':'#a78bfa','Kit':'#78716c','Gel':'#84cc16',
+  'Body Wash':'#ef4444','Roll on':'#f59e0b','Face Wash':'#3b82f6','Face Scrub':'#ec4899',
+  'Face Serum':'#8b5cf6','Face serum':'#8b5cf6','Lip Balm':'#f472b6','Body Lotion':'#14b8a6',
+  'Body lotion':'#14b8a6','Night Cream':'#6366f1','Eye Cream':'#a78bfa','Foot Cream':'#78716c',
+  'Body Scrub':'#f97316','Neck Roll On':'#22d3ee','Moisturizer':'#84cc16','Face Moisturizer':'#84cc16',
+  'Face toner':'#64748b','Sunscreen':'#fbbf24','Scalp scrub':'#7c3aed','-':'#555'
+};
+let rangeState={selRange:null,selBrand:'ALL',tab:'ranges',selYear:'ALL',selMonth:'ALL',selSku:'ALL',catDrill:null,dayFrom:1,dayTo:31,compMonthA:'',compMonthB:'',skuSearch:'',selRangeR:'ALL',pieMode:'cat',drrMode:'rev'};
+
+function getAsinImg(asin){return 'https://m.media-amazon.com/images/P/'+asin+'._SL75_.jpg'}
+
+function buildRangeData(){
+  if(!S.sales||!S.sales.brands)return{ranges:[],skus:[],categories:[],brands:[],sortedMonths:[],years:[],monthNames:[]};
+  var dayFrom=rangeState.dayFrom||1,dayTo=rangeState.dayTo||31;
+  var hasDayFilter=dayFrom>1||dayTo<31;
+  var allDates=[];
+  Object.values(S.sales.brands).forEach(function(bd){Object.keys(bd.daily||{}).forEach(function(d){allDates.push(d)})});
+  allDates.sort();
+  if(!allDates.length)return{ranges:[],skus:[],categories:[],brands:[],sortedMonths:[],years:[],monthNames:[]};
+  var monthSet=new Set(allDates.map(function(d){return d.slice(0,7)}));
+  var sortedMonths=[...monthSet].sort();
+  // Filter to Jan 2025 onwards
+  sortedMonths=sortedMonths.filter(function(m){return m>='2025-01'});
+  // Count actual days per month WITHIN the day range filter
+  var actualDays={};
+  sortedMonths.forEach(function(m){
+    var dateSet=new Set(allDates.filter(function(d){
+      if(!d.startsWith(m))return false;
+      if(hasDayFilter){var dom=parseInt(d.slice(8,10));return dom>=dayFrom&&dom<=dayTo;}
+      return true;
+    }));
+    actualDays[m]=dateSet.size||0;
+  });
+  var years=[...new Set(sortedMonths.map(function(m){return m.slice(0,4)}))].sort();
+
+  // Helper: does a date pass the day-of-month filter?
+  function dayOk(d){
+    if(!hasDayFilter)return true;
+    var dom=parseInt(d.slice(8,10));
+    return dom>=dayFrom&&dom<=dayTo;
+  }
+
+  var adsMap={};
+  var adsMonthlyMap={};
+  (Array.isArray(S.ads)?S.ads:[S.ads]).forEach(function(bd){
+    (bd.products||[]).forEach(function(p){
+      if(!adsMap[p.asin])adsMap[p.asin]={spend:0,sales:0};
+      if(!adsMonthlyMap[p.asin])adsMonthlyMap[p.asin]={};
+      // If day filter active, recompute from daily; else use totals
+      if(hasDayFilter){
+        Object.entries(p.days||{}).forEach(function([d,v]){
+          if(!dayOk(d))return;
+          adsMap[p.asin].spend+=v.spend||0;
+          adsMap[p.asin].sales+=v.sales||0;
+          var m=d.slice(0,7);
+          if(!adsMonthlyMap[p.asin][m])adsMonthlyMap[p.asin][m]={spend:0,sales:0};
+          adsMonthlyMap[p.asin][m].spend+=v.spend||0;
+          adsMonthlyMap[p.asin][m].sales+=v.sales||0;
+        });
+      } else {
+        adsMap[p.asin].spend+=(p.spend||p.sp_spend||0)+(p.sd_spend||0);
+        adsMap[p.asin].sales+=(p.sales||p.sp_sales||0)+(p.sd_sales||0);
+        Object.entries(p.days||{}).forEach(function([d,v]){
+          var m=d.slice(0,7);
+          if(!adsMonthlyMap[p.asin][m])adsMonthlyMap[p.asin][m]={spend:0,sales:0};
+          adsMonthlyMap[p.asin][m].spend+=v.spend||0;
+          adsMonthlyMap[p.asin][m].sales+=v.sales||0;
+        });
+      }
+    });
+  });
+
+  var catAgg={},rngAgg={},skus=[],brandSet=new Set(),catSet=new Set();
+  Object.entries(S.sales.brands).forEach(function([brandName,bd]){
+    brandSet.add(brandName);
+    (bd.asins||[]).forEach(function(a){
+      var cat=a.category||'-';
+      if(cat==='-'&&(a.net||0)<1000)return;
+      catSet.add(cat);
+      var key=brandName+'|||'+cat;
+      if(!catAgg[key])catAgg[key]={brand:brandName,category:cat,net:0,units:0,ad_spend:0,ad_sales:0,monthly:{},asin_count:0};
+      catAgg[key].asin_count++;
+
+      // Range aggregation using ASIN_MAP
+      var asinInfo=getAsinInfo(a.asin);
+      var rng=asinInfo.r||'-';
+      var rngKey=brandName+'|||'+rng;
+      if(!rngAgg[rngKey])rngAgg[rngKey]={brand:brandName,category:rng,net:0,units:0,ad_spend:0,ad_sales:0,monthly:{},asin_count:0};
+      rngAgg[rngKey].asin_count++;
+
+      // Compute totals from daily data respecting day filter
+      var asinNet=0,asinUnits=0;
+      var skuMonthly=[];
+      sortedMonths.forEach(function(m){
+        if(!catAgg[key].monthly[m])catAgg[key].monthly[m]={net:0,units:0,ad_spend:0,ad_sales:0};
+        if(!rngAgg[rngKey].monthly[m])rngAgg[rngKey].monthly[m]={net:0,units:0,ad_spend:0,ad_sales:0};
+        var mnet=0,munits=0;
+        Object.entries(a.daily||{}).forEach(function([d,v]){
+          if(!d.startsWith(m))return;
+          if(!dayOk(d))return;
+          mnet+=v.net||0;munits+=v.units||0;
+        });
+        catAgg[key].monthly[m].net+=mnet;catAgg[key].monthly[m].units+=munits;
+        rngAgg[rngKey].monthly[m].net+=mnet;rngAgg[rngKey].monthly[m].units+=munits;
+        var mAd=adsMonthlyMap[a.asin]&&adsMonthlyMap[a.asin][m]?adsMonthlyMap[a.asin][m]:{spend:0,sales:0};
+        catAgg[key].monthly[m].ad_spend+=mAd.spend;catAgg[key].monthly[m].ad_sales+=mAd.sales;
+        rngAgg[rngKey].monthly[m].ad_spend+=mAd.spend;rngAgg[rngKey].monthly[m].ad_sales+=mAd.sales;
+        var days=actualDays[m]||1;
+        skuMonthly.push({month:m,m:m.slice(5),net:Math.round(mnet),units:munits,drr:days>0?Math.round(mnet/days):0,drr_units:days>0?Math.round(munits/days):0,
+          ad_spend:Math.round(mAd.spend),ad_sales:Math.round(mAd.sales)});
+        asinNet+=mnet;asinUnits+=munits;
+      });
+
+      var ad=hasDayFilter?(adsMap[a.asin]||{spend:0,sales:0}):(adsMap[a.asin]||{spend:0,sales:0});
+      catAgg[key].net+=asinNet;catAgg[key].units+=asinUnits;
+      catAgg[key].ad_spend+=ad.spend;catAgg[key].ad_sales+=ad.sales;
+      rngAgg[rngKey].net+=asinNet;rngAgg[rngKey].units+=asinUnits;
+      rngAgg[rngKey].ad_spend+=ad.spend;rngAgg[rngKey].ad_sales+=ad.sales;
+
+      var tacos=asinNet>0?(ad.spend/asinNet*100):0;
+      var acos=ad.sales>0?(ad.spend/ad.sales*100):0;
+      var orgPct=asinNet>0?((asinNet-ad.sales)/asinNet*100):0;
+      var latestDrr=skuMonthly.length?skuMonthly[skuMonthly.length-1].drr:0;
+      var prevDrr=skuMonthly.length>1?skuMonthly[skuMonthly.length-2].drr:0;
+      var firstDrr=skuMonthly.length?skuMonthly[0].drr:0;
+      var drrTrend=prevDrr>0?((latestDrr-prevDrr)/prevDrr*100):(latestDrr>0?100:0);
+      // MoM for latest
+      var momDrr=prevDrr>0?((latestDrr-prevDrr)/prevDrr*100):0;
+
+      var asinInfo=getAsinInfo(a.asin);
+      var skuRange=asinInfo.r||'';
+
+      skus.push({asin:a.asin,sku:a.sku||'',name:(a.title||a.asin).slice(0,50),brand:brandName,
+        category:cat,range:skuRange,net:Math.round(asinNet),units:asinUnits,
+        ad_spend:Math.round(ad.spend),ad_sales:Math.round(ad.sales),
+        tacos:+(tacos.toFixed(1)),acos:+(acos.toFixed(1)),org_pct:+(orgPct.toFixed(1)),
+        latest_drr:latestDrr,prev_drr:prevDrr,first_drr:firstDrr,
+        drr_trend:+(drrTrend.toFixed(1)),mom_drr:+(momDrr.toFixed(1)),monthly:skuMonthly});
+    });
+  });
+
+  // Collect unique ranges
+  var rangeSet=new Set();skus.forEach(function(s){if(s.range&&s.range!=='0'&&s.range!=='nan')rangeSet.add(s.range);});
+
+  var ranges=Object.values(catAgg).map(function(r){
+    var tacos=r.net>0?(r.ad_spend/r.net*100):0;
+    var acos=r.ad_sales>0?(r.ad_spend/r.ad_sales*100):0;
+    var organic=r.net-r.ad_sales;var orgPct=r.net>0?(organic/r.net*100):0;
+    var mArr=sortedMonths.map(function(m){
+      var d=r.monthly[m]||{net:0,units:0,ad_spend:0,ad_sales:0};
+      var days=actualDays[m]||1;
+      var mTacos=d.net>0?(d.ad_spend/d.net*100):0;
+      var mAcos=d.ad_sales>0?(d.ad_spend/d.ad_sales*100):0;
+      return{month:m,net:d.net,units:d.units,drr:days>0?Math.round(d.net/days):0,drr_units:days>0?Math.round(d.units/days):0,
+        ad_spend:d.ad_spend,ad_sales:d.ad_sales,tacos:+(mTacos.toFixed(1)),acos:+(mAcos.toFixed(1))};
+    });
+    var latestDrr=mArr.length?mArr[mArr.length-1].drr:0;
+    var prevDrr=mArr.length>1?mArr[mArr.length-2].drr:0;
+    var firstDrr=mArr[0]?mArr[0].drr:0;
+    var trend=prevDrr>0?((latestDrr-prevDrr)/prevDrr*100):(latestDrr>0?100:0);
+    return Object.assign({},r,{tacos:+(tacos.toFixed(1)),acos:+(acos.toFixed(1)),organic:Math.round(organic),organic_pct:+(orgPct.toFixed(1)),
+      monthlyArr:mArr,latest_drr:latestDrr,prev_drr:prevDrr,first_drr:firstDrr,drr_trend:+(trend.toFixed(1))});
+  }).filter(function(r){return r.net>5000}).sort(function(a,b){return b.net-a.net});
+
+  // Build range-level aggregates (same structure as ranges but grouped by range)
+  var rangeRanges=Object.values(rngAgg).map(function(r){
+    var tacos=r.net>0?(r.ad_spend/r.net*100):0;
+    var acos=r.ad_sales>0?(r.ad_spend/r.ad_sales*100):0;
+    var organic=r.net-r.ad_sales;var orgPct=r.net>0?(organic/r.net*100):0;
+    var mArr=sortedMonths.map(function(m){
+      var d=r.monthly[m]||{net:0,units:0,ad_spend:0,ad_sales:0};
+      var days=actualDays[m]||1;
+      var mTacos=d.net>0?(d.ad_spend/d.net*100):0;
+      var mAcos=d.ad_sales>0?(d.ad_spend/d.ad_sales*100):0;
+      return{month:m,net:d.net,units:d.units,drr:days>0?Math.round(d.net/days):0,drr_units:days>0?Math.round(d.units/days):0,
+        ad_spend:d.ad_spend,ad_sales:d.ad_sales,tacos:+(mTacos.toFixed(1)),acos:+(mAcos.toFixed(1))};
+    });
+    var latestDrr=mArr.length?mArr[mArr.length-1].drr:0;
+    var prevDrr=mArr.length>1?mArr[mArr.length-2].drr:0;
+    var trend=prevDrr>0?((latestDrr-prevDrr)/prevDrr*100):(latestDrr>0?100:0);
+    return Object.assign({},r,{tacos:+(tacos.toFixed(1)),acos:+(acos.toFixed(1)),organic:Math.round(organic),organic_pct:+(orgPct.toFixed(1)),
+      monthlyArr:mArr,latest_drr:latestDrr,prev_drr:prevDrr,drr_trend:+(trend.toFixed(1))});
+  }).filter(function(r){return r.net>5000}).sort(function(a,b){return b.net-a.net});
+
+  return{ranges:ranges,rangeRanges:rangeRanges,skus:skus,sortedMonths:sortedMonths,brands:[...brandSet],categories:[...catSet].sort(),years:years,rangesList:[...rangeSet].sort()};
+}
+
+function riFmt(n){if(n==null||isNaN(n))return'—';if(Math.abs(n)>=10000000)return'\u20b9'+(n/10000000).toFixed(1)+'Cr';if(Math.abs(n)>=100000)return'\u20b9'+(n/100000).toFixed(1)+'L';if(Math.abs(n)>=1000)return'\u20b9'+(n/1000).toFixed(0)+'K';return'\u20b9'+Math.round(n)}
+function riPct(n){if(n==null||isNaN(n))return'—';return(n>0?'+':'')+n.toFixed(1)+'%'}
+function riSig(t){return t>5?['▲ GROWING','var(--green)']:t>-5?['— STABLE','var(--amber)']:t>-15?['▼ DECLINING','var(--orange)']:['⚠ CRITICAL','var(--red)']}
+function riSkuSig(s){if(s.mom_drr>10&&s.tacos<20)return['SCALE','var(--green)'];if(s.mom_drr>0&&s.tacos<15)return['SCALE','var(--green)'];if(s.mom_drr<-20)return['INVESTIGATE','var(--red)'];if(s.tacos>30)return['CUT','var(--red)'];if(s.mom_drr<-5)return['DECLINING','var(--amber)'];return['MAINTAIN','var(--muted)']}
+function riBrandShort(b){return b==='Bare Anatomy'?'BA':b==='Chemist at Play'?'CAP':b==='Sunscoop'?'SS':b.slice(0,3).toUpperCase()}
+const MONTH_LABELS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function monthLabel(m){var p=m.split('-');return MONTH_LABELS[parseInt(p[1])-1]+" '"+p[0].slice(2);}
+
+// SFR data helpers — maps sfr_data.json families/keywords via ASIN_MAP
+function getSfrMap(){
+  if(!S.sfr)return{byCat:{},byAsin:{},keywords:[]};
+  var byAsin={};
+  var brandFull={'BA':'Bare Anatomy','CAP':'Chemist at Play','SS':'Sunscoop'};
+  // Step 1: Map each ASIN from families to its SFR data
+  // families have: main_asin (string), asins[] (may be empty), avg_sfr, avg_org_rank, tracked_kws, ranked_kws
+  (S.sfr.families||[]).forEach(function(f){
+    var sfr=f.avg_sfr||f.sfr||f.best_sfr||0;
+    var orgRank=f.avg_org_rank||0;
+    var kwCount=f.kw_count||f.tracked_kws||0;
+    var rankedKws=f.ranked_kws||0;
+    // Demand: if more ranked keywords than not, demand is up
+    var dUp=rankedKws>0?rankedKws:0;
+    var dDown=kwCount>rankedKws?kwCount-rankedKws:0;
+    var sfrEntry={sfr:sfr,orgRank:orgRank,demandUp:dUp,demandDown:dDown,kwCount:kwCount};
+    // Use asins array if available, otherwise main_asin
+    var asinList=(f.asins&&f.asins.length)?f.asins:[];
+    if(!asinList.length&&f.main_asin)asinList=[f.main_asin];
+    asinList.forEach(function(a){
+      if(a)byAsin[a.toUpperCase()]=sfrEntry;
+    });
+  });
+
+  // Step 2: Aggregate to category level using ASIN_MAP (getAsinInfo)
+  var byCat={};
+  Object.keys(byAsin).forEach(function(asin){
+    var info=getAsinInfo(asin);
+    if(!info.c)return;
+    var brand=brandFull[info.b]||info.b||'';var cat=info.c||'-';
+    var key=brand+'|||'+cat;
+    var s=byAsin[asin];
+    if(!byCat[key])byCat[key]={sfrSum:0,demandUp:0,demandDown:0,count:0};
+    byCat[key].sfrSum+=s.sfr;byCat[key].demandUp+=s.demandUp;byCat[key].demandDown+=s.demandDown;byCat[key].count++;
+  });
+  // Average
+  Object.keys(byCat).forEach(function(k){
+    var c=byCat[k];
+    c.sfr=c.count>0?Math.round(c.sfrSum/c.count):0;
+  });
+
+  // Step 3: Also aggregate by range using ASIN_MAP
+  var byRange={};
+  Object.keys(byAsin).forEach(function(asin){
+    var info=getAsinInfo(asin);
+    if(!info.r)return;
+    var brand=brandFull[info.b]||info.b||'';var rng=info.r||'-';
+    var key=brand+'|||'+rng;
+    var s=byAsin[asin];
+    if(!byRange[key])byRange[key]={sfrSum:0,demandUp:0,demandDown:0,count:0};
+    byRange[key].sfrSum+=s.sfr;byRange[key].demandUp+=s.demandUp;byRange[key].demandDown+=s.demandDown;byRange[key].count++;
+  });
+  Object.keys(byRange).forEach(function(k){
+    var c=byRange[k];
+    c.sfr=c.count>0?Math.round(c.sfrSum/c.count):0;
+  });
+
+  return{byCat:byCat,byRange:byRange,byAsin:byAsin,keywords:S.sfr.keywords||[]};
+}
+function sfrBadge(sfr){
+  if(!sfr||sfr<=0)return'<span style="color:var(--dim);font-size:9px">—</span>';
+  var c=sfr<=5000?'var(--green)':sfr<=20000?'var(--green2)':sfr<=50000?'var(--amber)':sfr<=100000?'var(--orange)':'var(--red)';
+  return'<span style="font-family:var(--mono);font-size:10px;color:'+c+'">#'+sfr.toLocaleString('en-IN')+'</span>';
+}
+
+function renderRangeIntel(baseO,bds){
+  destroyCharts();
+  var data=buildRangeData();
+  var sfrMap=getSfrMap();
+  var ranges=data.ranges,rangeRanges=data.rangeRanges||[],skus=data.skus,sortedMonths=data.sortedMonths,brands=data.brands,years=data.years,rangesList=data.rangesList||[];
+  if(!ranges.length){document.getElementById('app').innerHTML='<div class="sec" style="padding:40px;text-align:center;color:var(--muted)"><h3>No sales data available</h3><p style="font-size:12px;margin-top:6px">Ensure sales_data.json has data from Jan 2025 onwards</p></div>';return}
+  var rs=rangeState;
+  var sb=rs.selBrand,sy=rs.selYear,sm=rs.selMonth,sr=rs.selRange,ss=rs.selSku,cd=rs.catDrill,srR=rs.selRangeR||'ALL';
+  var df=rs.dayFrom||1,dt2=rs.dayTo||31,hasDayF=df>1||dt2<31;
+  var pieMode=rs.pieMode||'cat';
+  var isRangeMode=pieMode==='range';
+
+  // Choose base data based on mode
+  var baseRanges=isRangeMode?rangeRanges:ranges;
+  var filtRanges=sb==='ALL'?baseRanges:baseRanges.filter(function(r){return r.brand===sb});
+  var filtSkus=sb==='ALL'?skus:skus.filter(function(s){return s.brand===sb});
+  if(sr&&sr!=='ALL'){
+    if(isRangeMode){
+      // In range mode, sr filters by range name (stored in .category field of rangeRanges)
+      filtRanges=filtRanges.filter(function(r){return r.category===sr});
+      filtSkus=filtSkus.filter(function(s){return s.range===sr});
+    } else {
+      filtRanges=filtRanges.filter(function(r){return r.category===sr});
+      filtSkus=filtSkus.filter(function(s){return s.category===sr});
+    }
+  }
+  if(srR&&srR!=='ALL'){filtSkus=filtSkus.filter(function(s){return s.range===srR});}
+  var filtCats=[...new Set((sb==='ALL'?baseRanges:baseRanges.filter(function(r){return r.brand===sb})).map(function(r){return r.category}))].sort();
+  // Get available ranges for dropdown (from filtered SKUs)
+  var filtRangesList=rangesList;
+  
+  // Filter months by year/month selection
+  var visibleMonths=sortedMonths;
+  if(sy&&sy!=='ALL')visibleMonths=visibleMonths.filter(function(m){return m.startsWith(sy)});
+  if(sm&&sm!=='ALL')visibleMonths=visibleMonths.filter(function(m){return m===sm});
+
+  // Current month = latest month in data
+  var curMonth=sortedMonths[sortedMonths.length-1];
+  var prevMonth=sortedMonths.length>1?sortedMonths[sortedMonths.length-2]:null;
+  // YoY: same month last year
+  var curY=parseInt(curMonth.slice(0,4));var curM=curMonth.slice(5,7);
+  var yoyMonth=(curY-1)+'-'+curM;
+  var yoyExists=sortedMonths.includes(yoyMonth);
+
+  // Compute KPIs — dynamic based on comparison selection
+  var cmpA=rs.compMonthA||'',cmpB=rs.compMonthB||'';
+  var hasComp=cmpA&&cmpB&&cmpA!==cmpB;
+  // Determine which months to show in KPIs
+  var kpiMonth=hasComp?cmpB:curMonth;  // "current" = compare target or latest
+  var kpiBaseMonth=hasComp?cmpA:(prevMonth||curMonth);  // "base" = compare base or prev
+  var kpiYoyMonth=hasComp?'':(curY-1)+'-'+curM;  // YoY only in default mode
+  var kpiYoyExists=!hasComp&&sortedMonths.includes(kpiYoyMonth);
+
+  var curMonthNet=0,curMonthUnits=0,baseMonthNet=0,yoyMonthNet=0;
+  var curMonthDays=0,baseMonthDays=0;
+  filtRanges.forEach(function(r){
+    r.monthlyArr.forEach(function(ma){
+      if(ma.month===kpiMonth){curMonthNet+=ma.net;curMonthUnits+=ma.units;}
+      if(ma.month===kpiBaseMonth){baseMonthNet+=ma.net;}
+      if(kpiYoyExists&&ma.month===kpiYoyMonth){yoyMonthNet+=ma.net;}
+    });
+  });
+  // Days count
+  var allDates=[];Object.values(S.sales.brands).forEach(function(bd){Object.keys(bd.daily||{}).forEach(function(d){allDates.push(d)})});
+  function dayOkKpi(d){if(!hasDayF)return true;var dom=parseInt(d.slice(8,10));return dom>=df&&dom<=dt2;}
+  curMonthDays=new Set(allDates.filter(function(d){return d.startsWith(kpiMonth)&&dayOkKpi(d)})).size||1;
+  baseMonthDays=new Set(allDates.filter(function(d){return d.startsWith(kpiBaseMonth)&&dayOkKpi(d)})).size||1;
+  var curDRR=Math.round(curMonthNet/curMonthDays);
+  var baseDRR=Math.round(baseMonthNet/baseMonthDays);
+  var momPct=baseMonthNet>0?((curMonthNet-baseMonthNet)/baseMonthNet*100):0;
+  var yoyPct=yoyMonthNet>0?((curMonthNet-yoyMonthNet)/yoyMonthNet*100):0;
+
+  // All unique SKUs for dropdown
+  var allSkuList=filtSkus.filter(function(s){return s.net>1000}).sort(function(a,b){return b.net-a.net}).slice(0,100);
+
+  var h='';
+  // ── HEADER ──
+  h+='<div style="padding:16px 22px 8px;background:linear-gradient(180deg,#0c0c14 0%,#0a0a0f 100%)">';
+  h+='<div style="display:flex;align-items:center;gap:12px;margin-bottom:4px"><div style="width:6px;height:28px;border-radius:3px;background:linear-gradient(180deg,#3b82f6,#8b5cf6)"></div>';
+  h+='<div><div style="font-size:10px;text-transform:uppercase;letter-spacing:2px;color:var(--muted)">Revenue Analytics</div>';
+  h+='<h1 style="font-size:17px;font-weight:700;margin-top:2px;color:var(--text)">Run-Rate Dashboard</h1></div>';
+  h+='<div style="margin-left:auto;text-align:right"><div style="font-size:9px;color:var(--dim)">Data through</div><div style="font-size:12px;font-weight:600;color:var(--green);font-family:var(--mono)">'+monthLabel(curMonth)+'</div>'+(hasDayF?'<div style="font-size:9px;color:var(--cyan)">Day '+df+'–'+dt2+'</div>':'')+'</div></div></div>';
+
+  // ── FILTER BAR — Dropdowns ──
+  h+='<div class="ctrl" style="gap:10px;padding:8px 22px;flex-wrap:wrap;background:#0b0b13;border-bottom:1px solid var(--border)">';
+  // Year
+  h+='<label>Year</label><select class="ctrl select" onchange="rangeState.selYear=this.value;render()" style="min-width:70px"><option value="ALL"'+(sy==='ALL'?' selected':'')+'>All</option>';
+  years.forEach(function(y){h+='<option value="'+y+'"'+(sy===y?' selected':'')+'>'+y+'</option>'});
+  h+='</select>';
+  // Brand
+  h+='<label>Brand</label><select onchange="rangeState.selBrand=this.value;rangeState.catDrill=null;render()" style="min-width:90px"><option value="ALL"'+(sb==='ALL'?' selected':'')+'>All Brands</option>';
+  brands.forEach(function(b){h+='<option value="'+b+'"'+(sb===b?' selected':'')+'>'+riBrandShort(b)+' — '+b+'</option>'});
+  h+='</select>';
+  // Category
+  h+='<label>Category</label><select onchange="rangeState.selRange=this.value;rangeState.catDrill=null;render()" style="min-width:100px"><option value="ALL"'+((!sr||sr==='ALL')?' selected':'')+'>All Categories</option>';
+  filtCats.forEach(function(c){h+='<option value="'+c+'"'+(sr===c?' selected':'')+'>'+c+'</option>'});
+  h+='</select>';
+  // Range
+  h+='<label>Range</label><select onchange="rangeState.selRangeR=this.value;render()" style="min-width:90px"><option value="ALL"'+(srR==='ALL'?' selected':'')+'>All Ranges</option>';
+  filtRangesList.forEach(function(r){h+='<option value="'+r+'"'+(srR===r?' selected':'')+'>'+r+'</option>'});
+  h+='</select>';
+  // Month
+  h+='<label>Month</label><select onchange="rangeState.selMonth=this.value;render()" style="min-width:80px"><option value="ALL"'+(sm==='ALL'?' selected':'')+'>All</option>';
+  sortedMonths.forEach(function(m){h+='<option value="'+m+'"'+(sm===m?' selected':'')+'>'+monthLabel(m)+'</option>'});
+  h+='</select>';
+  // SKU
+  h+='<label>SKU</label><select onchange="rangeState.selSku=this.value;render()" style="min-width:120px;max-width:200px"><option value="ALL"'+(ss==='ALL'?' selected':'')+'>All SKUs</option>';
+  allSkuList.forEach(function(s){h+='<option value="'+s.asin+'"'+(ss===s.asin?' selected':'')+'>'+(s.sku||s.asin)+' — '+(s.name||'').slice(0,30)+'</option>'});
+  h+='</select>';
+  // Reset
+  h+='<button class="fbtn" onclick="rangeState={selRange:null,selBrand:\'ALL\',tab:\'ranges\',selYear:\'ALL\',selMonth:\'ALL\',selSku:\'ALL\',catDrill:null,dayFrom:1,dayTo:31,compMonthA:\'\',compMonthB:\'\',skuSearch:\'\',selRangeR:\'ALL\',pieMode:\'cat\'};render()" style="margin-left:auto;color:var(--muted)">↺ Reset</button>';
+  h+='</div>';
+  // ── DAY RANGE FILTER — second row ──
+  h+='<div class="ctrl" style="gap:8px;padding:4px 22px;background:#0b0b13;border-bottom:1px solid var(--border);align-items:center">';
+  h+='<label style="color:'+(hasDayF?'var(--cyan)':'var(--muted)')+'">Day Range</label>';
+  h+='<select onchange="rangeState.dayFrom=parseInt(this.value);render()" style="min-width:50px">';
+  for(var di=1;di<=31;di++){h+='<option value="'+di+'"'+(df===di?' selected':'')+'>'+di+'</option>';}
+  h+='</select>';
+  h+='<span style="color:var(--dim);font-size:11px">to</span>';
+  h+='<select onchange="rangeState.dayTo=parseInt(this.value);render()" style="min-width:50px">';
+  for(var di2=1;di2<=31;di2++){h+='<option value="'+di2+'"'+(dt2===di2?' selected':'')+'>'+di2+'</option>';}
+  h+='</select>';
+  if(hasDayF){h+='<span style="font-size:10px;color:var(--cyan);font-weight:600">📅 Comparing day '+df+'–'+dt2+' across all months</span>';
+    h+='<button class="fbtn" onclick="rangeState.dayFrom=1;rangeState.dayTo=31;render()" style="color:var(--red);border-color:var(--red);font-size:9px;padding:3px 8px">✕ Full Month</button>';}
+  // Month comparison selector (inline)
+  h+='<div class="sep"></div>';
+  h+='<label style="color:'+(hasComp?'var(--purple)':'var(--muted)')+'">Compare</label>';
+  h+='<select onchange="rangeState.compMonthA=this.value;render()" style="min-width:75px"><option value="">Base…</option>';
+  sortedMonths.forEach(function(m){h+='<option value="'+m+'"'+(cmpA===m?' selected':'')+'>'+monthLabel(m)+'</option>';});
+  h+='</select>';
+  h+='<span style="color:var(--dim);font-size:11px">vs</span>';
+  h+='<select onchange="rangeState.compMonthB=this.value;render()" style="min-width:75px"><option value="">Compare…</option>';
+  sortedMonths.forEach(function(m){h+='<option value="'+m+'"'+(cmpB===m?' selected':'')+'>'+monthLabel(m)+'</option>';});
+  h+='</select>';
+  if(hasComp){h+='<span style="font-size:10px;color:var(--purple);font-weight:600">⇔ '+monthLabel(cmpA)+' vs '+monthLabel(cmpB)+'</span>';
+    h+='<button class="fbtn" onclick="rangeState.compMonthA=\'\';rangeState.compMonthB=\'\';render()" style="color:var(--red);border-color:var(--red);font-size:9px;padding:3px 8px">✕</button>';}
+  h+='</div>';
+
+  // ── SKU SINGLE VIEW ──
+  if(ss&&ss!=='ALL'){
+    var sku=filtSkus.find(function(s){return s.asin===ss});
+    if(sku){
+      h+='<div class="sts" style="grid-template-columns:repeat(6,1fr)">';
+      h+='<div class="st"><div class="lb">SKU</div><div class="vl" style="font-size:12px">'+((sku.sku||sku.asin))+'</div><div class="ch" style="color:var(--muted)">'+sku.category+'</div></div>';
+      h+='<div class="st"><div class="lb" style="color:var(--green)">NET REV</div><div class="vl" style="color:var(--green)">'+riFmt(sku.net)+'</div></div>';
+      h+='<div class="st"><div class="lb">DRR</div><div class="vl">'+riFmt(sku.latest_drr)+'</div></div>';
+      var skuMom=sku.prev_drr>0?((sku.latest_drr-sku.prev_drr)/sku.prev_drr*100):0;
+      h+='<div class="st"><div class="lb">MoM</div><div class="vl" style="color:'+(skuMom>=0?'var(--green)':'var(--red)')+'">'+riPct(skuMom)+'</div></div>';
+      h+='<div class="st"><div class="lb" style="color:'+(sku.tacos>18?'var(--red)':'var(--green)')+'">TACOS</div><div class="vl" style="color:'+(sku.tacos>18?'var(--red)':'var(--green)')+'">'+sku.tacos+'%</div></div>';
+      h+='<div class="st"><div class="lb">ACOS</div><div class="vl" style="color:'+(sku.acos>35?'var(--red)':'var(--muted)')+'">'+sku.acos+'%</div></div>';
+      h+='</div>';
+      // SKU monthly DRR chart
+      h+='<div class="chart-row" style="grid-template-columns:1fr"><div class="chart-wrap"><div class="chart-label" style="display:flex;align-items:center;gap:8px">'+(isUnits?'Monthly Units':'Monthly DRR')+' — '+(sku.sku||sku.asin)+' <div style="display:flex;gap:2px;margin-left:auto"><button class="fbtn '+(!isUnits?'on':'')+'" onclick="rangeState.drrMode=\'rev\';render()" style="font-size:9px;padding:2px 8px">₹ Rev</button><button class="fbtn '+(isUnits?'on':'')+'" onclick="rangeState.drrMode=\'units\';render()" style="font-size:9px;padding:2px 8px"># Units</button></div></div><div style="height:220px"><canvas id="ri-sku-single-chart"></canvas></div></div></div>';
+      // SKU monthly table
+      h+='<div class="sec"><div class="sec-title">Monthly Breakdown</div>';
+      h+='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>MONTH</th><th class="r">NET REV</th><th class="r">DRR</th><th class="r">UNITS</th><th class="r">AD SPEND</th><th class="r">AD SALES</th><th class="c">TACOS</th><th class="c">ACOS</th></tr></thead><tbody>';
+      sku.monthly.forEach(function(m){
+        if(visibleMonths.indexOf(m.month)===-1)return;
+        var t=m.net>0?(m.ad_spend/m.net*100):0;var ac=m.ad_sales>0?(m.ad_spend/m.ad_sales*100):0;
+        h+='<tr><td style="font-weight:600">'+monthLabel(m.month)+'</td>';
+        h+='<td class="r" style="color:var(--green)">'+riFmt(m.net)+'</td>';
+        h+='<td class="r">'+riFmt(m.drr)+'</td>';
+        h+='<td class="r">'+fN(m.units)+'</td>';
+        h+='<td class="r" style="color:var(--amber)">'+riFmt(m.ad_spend)+'</td>';
+        h+='<td class="r" style="color:var(--blue)">'+riFmt(m.ad_sales)+'</td>';
+        h+='<td class="c" style="color:'+(t>18?'var(--red)':t<12?'var(--green)':'var(--amber)')+'">'+t.toFixed(1)+'%</td>';
+        h+='<td class="c" style="color:'+(ac>35?'var(--red)':'var(--muted)')+'">'+ac.toFixed(1)+'%</td></tr>';
+      });
+      h+='</tbody></table></div></div>';
+      document.getElementById('app').innerHTML=h;
+      setTimeout(function(){
+        if(document.getElementById('ri-sku-single-chart')){
+          var vm=sku.monthly.filter(function(m){return visibleMonths.indexOf(m.month)!==-1});
+          var isU=rangeState.drrMode==='units';
+          var ds1=isU?
+            {label:'DRR Units',data:vm.map(function(m){return m.drr_units||0}),backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4,yAxisID:'y',order:2}:
+            {label:'DRR ₹',data:vm.map(function(m){return m.drr}),backgroundColor:'rgba(59,130,246,.6)',borderColor:'#3b82f6',borderWidth:1,borderRadius:4,yAxisID:'y',order:2};
+          var ds2=isU?
+            {label:'Total Units',data:vm.map(function(m){return m.units}),type:'line',borderColor:'#10b981',backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#10b981',tension:.3,borderWidth:2,yAxisID:'y1',order:1}:
+            {label:'Net Rev ₹',data:vm.map(function(m){return m.net}),type:'line',borderColor:'#10b981',backgroundColor:'transparent',pointRadius:3,pointBackgroundColor:'#10b981',tension:.3,borderWidth:2,yAxisID:'y1',order:1};
+          var yFmtL=isU?function(v){return v>=1000?(v/1000).toFixed(0)+'K':v}:function(v){return v>=100000?'\u20b9'+(v/100000).toFixed(1)+'L':v>=1000?'\u20b9'+(v/1000)+'K':'\u20b9'+v};
+          var yFmtR=isU?function(v){return v>=1000?(v/1000).toFixed(0)+'K':v}:function(v){return v>=100000?'\u20b9'+(v/100000).toFixed(1)+'L':v>=1000?'\u20b9'+(v/1000)+'K':'\u20b9'+v};
+          charts['ri-sku-single']=new Chart(document.getElementById('ri-sku-single-chart'),{type:'bar',data:{
+            labels:vm.map(function(m){return monthLabel(m.month)}),
+            datasets:[ds1,ds2]
+          },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:10}}}},
+            scales:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{display:false}},
+              y:{position:'left',beginAtZero:true,ticks:{color:'#3b82f6',font:{size:9},callback:yFmtL},grid:{color:'#1c1c25'}},
+              y1:{position:'right',beginAtZero:true,ticks:{color:'#10b981',font:{size:9},callback:yFmtR},grid:{drawOnChartArea:false}}}}});
+        }
+      },80);
+      return;
+    }
+  }
+
+  // ── KPI CARDS ──
+  h+='<div class="sts" style="grid-template-columns:repeat(4,1fr);padding:12px 22px">';
+  h+='<div class="st" style="border-left:3px solid var(--green)"><div class="lb" style="color:var(--green)">'+monthLabel(kpiMonth)+' REVENUE</div><div class="vl" style="color:var(--green)">'+riFmt(curMonthNet)+'</div><div class="ch" style="color:var(--dim)">'+fN(curMonthUnits)+' units</div></div>';
+  h+='<div class="st" style="border-left:3px solid var(--blue)"><div class="lb" style="color:var(--blue)">DAILY RUN RATE</div><div class="vl" style="color:var(--blue)">'+riFmt(curDRR)+'</div><div class="ch" style="color:var(--dim)">/day ('+curMonthDays+'d data)</div></div>';
+  var momCol=momPct>=0?'var(--green)':'var(--red)';
+  var momLabel=hasComp?monthLabel(cmpA)+' → '+monthLabel(cmpB):'MoM CHANGE';
+  h+='<div class="st" style="border-left:3px solid '+momCol+'"><div class="lb" style="color:'+momCol+'">'+momLabel+'</div><div class="vl" style="color:'+momCol+'">'+riPct(momPct)+'</div><div class="ch" style="color:var(--dim)">vs '+monthLabel(kpiBaseMonth)+'</div></div>';
+  if(hasComp){
+    // When custom comparison, show base month DRR as 4th card
+    h+='<div class="st" style="border-left:3px solid var(--purple)"><div class="lb" style="color:var(--purple)">'+monthLabel(cmpA)+' DRR</div><div class="vl" style="color:var(--purple)">'+riFmt(baseDRR)+'</div><div class="ch" style="color:var(--dim)">base period</div></div>';
+  } else if(kpiYoyExists){
+    var yoyCol=yoyPct>=0?'var(--green)':'var(--red)';
+    h+='<div class="st" style="border-left:3px solid '+yoyCol+'"><div class="lb" style="color:'+yoyCol+'">YoY CHANGE</div><div class="vl" style="color:'+yoyCol+'">'+riPct(yoyPct)+'</div><div class="ch" style="color:var(--dim)">vs '+monthLabel(kpiYoyMonth)+'</div></div>';
+  } else {
+    h+='<div class="st" style="border-left:3px solid var(--dim)"><div class="lb">YoY</div><div class="vl" style="color:var(--dim)">N/A</div><div class="ch" style="color:var(--dim)">No prior year data</div></div>';
+  }
+  h+='</div>';
+
+  // ── AI ANALYZE BUTTON + ALWAYS-VISIBLE CHAT ──
+  h+='<div style="padding:6px 22px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">';
+  h+='<button onclick="runAnalysisAI()" style="background:linear-gradient(135deg,#00e5ff,#7c3aed);border:none;color:#fff;padding:7px 18px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:var(--font)"><span style="font-size:14px">🤖</span> AI Analyze</button>';
+  h+='<input id="ai-q-input-top" style="flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:20px;padding:7px 14px;color:var(--text);font-size:11px;font-family:var(--font)" placeholder="Ask AI anything about this data..." onkeydown="if(event.key===\'Enter\'){if(!document.getElementById(\'ai-analysis-panel\').style.display||document.getElementById(\'ai-analysis-panel\').style.display===\'none\'){runAnalysisAI();}var qi=document.getElementById(\'ai-q-input\');if(qi){qi.value=this.value;this.value=\'\';askAnalysisAI();}else{this.value=\'\';}}">';
+  h+='<button onclick="var v=document.getElementById(\'ai-q-input-top\').value.trim();if(!v)return;if(!document.getElementById(\'ai-analysis-panel\').style.display||document.getElementById(\'ai-analysis-panel\').style.display===\'none\'){runAnalysisAI();}setTimeout(function(){var qi=document.getElementById(\'ai-q-input\');if(qi){qi.value=v;askAnalysisAI();}document.getElementById(\'ai-q-input-top\').value=\'\';},2500)" style="background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.3);color:#00e5ff;padding:7px 14px;border-radius:20px;font-size:11px;font-weight:600;cursor:pointer">Ask</button>';
+  h+='</div>';
+  // Quick-ask buttons row
+  h+='<div style="padding:0 22px 6px;display:flex;gap:4px;flex-wrap:wrap">';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Give me a full analysis with insights and action items\')" style="font-size:9px;padding:3px 8px">📊 Full Analysis</button>';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Why is DRR declining for the biggest losers? What should I do?\')" style="font-size:9px;padding:3px 8px">📉 Why declining?</button>';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Where can I safely cut 1 lakh in ad spend without losing sales?\')" style="font-size:9px;padding:3px 8px">✂️ Cut ₹1L spend</button>';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Which 3 SKUs should I scale ads on and by how much?\')" style="font-size:9px;padding:3px 8px">🚀 Scale which?</button>';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Compare organic vs paid dependency by category — where am I too dependent on ads?\')" style="font-size:9px;padding:3px 8px">🌿 Org vs Paid</button>';
+  h+='<button class="fbtn" onclick="runQuickAsk(\'Which categories or ranges have the highest growth potential based on DRR trends and SFR?\')" style="font-size:9px;padding:3px 8px">💡 Growth potential</button>';
+  h+='</div>';
+  h+='<div id="ai-analysis-panel" style="display:none;margin:0 22px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;max-height:500px;overflow-y:auto"></div>';
+
+  // ── CHARTS ROW: Monthly DRR bar + Category DRR pie ──
+  h+='<div class="chart-row" style="grid-template-columns:2fr 1fr;padding:0 22px 12px">';
+  var drrMode=rs.drrMode||'rev';var isUnits=drrMode==='units';
+  var drrLabel=isUnits?'Monthly DRR Units':'Monthly DRR ₹';
+  h+='<div class="chart-wrap"><div class="chart-label" style="display:flex;align-items:center;gap:8px">'+drrLabel+(sb!=='ALL'?' — '+sb:'')+' <div style="display:flex;gap:2px;margin-left:auto"><button class="fbtn '+(!isUnits?'on':'')+'" onclick="rangeState.drrMode=\'rev\';render()" style="font-size:9px;padding:2px 8px">₹ Rev</button><button class="fbtn '+(isUnits?'on':'')+'" onclick="rangeState.drrMode=\'units\';render()" style="font-size:9px;padding:2px 8px"># Units</button></div></div><div style="height:260px"><canvas id="ri-drr-bar"></canvas></div></div>';
+  h+='<div class="chart-wrap"><div class="chart-label" style="display:flex;align-items:center;gap:8px">Revenue Share <div style="display:flex;gap:2px;margin-left:auto"><button class="fbtn '+(!(rangeState.pieMode==='range')?'on':'')+'" onclick="rangeState.pieMode=\'cat\';render()" style="font-size:9px;padding:2px 8px">Category</button><button class="fbtn '+((rangeState.pieMode==='range')?'on':'')+'" onclick="rangeState.pieMode=\'range\';render()" style="font-size:9px;padding:2px 8px">Range</button></div></div><div style="height:260px"><canvas id="ri-cat-pie"></canvas></div></div>';
+  h+='</div>';
+
+  // ── CATEGORY TABLE with monthly DRR + TACOS + ACOS ──
+  if(!cd){
+    // Total net for REV% calculation
+    var totalFilteredNet=filtRanges.reduce(function(s,r){return s+r.net},0);
+    var tableLabel=isRangeMode?'Range Performance':'Category Performance';
+    var colLabel=isRangeMode?'RANGE':'CATEGORY';
+    h+='<div class="sec"><div class="sec-title" style="display:flex;align-items:center;gap:8px">'+tableLabel+' <span style="font-size:9px;color:var(--dim);font-weight:400">click row to drill into SKUs</span></div>';
+    h+='<div class="tbl-wrap" style="max-height:600px"><table class="tbl"><thead><tr>';
+    if(sb==='ALL')h+='<th>BRAND</th>';
+    h+='<th>'+colLabel+'</th><th class="r">SKUs</th><th class="r">NET REV</th><th class="c">REV%</th><th class="r">AD SPEND</th><th class="c">TACOS</th><th class="c">ACOS</th><th class="r">ORG%</th><th class="c" style="color:var(--cyan)">SFR</th><th class="c" style="color:var(--cyan)">DEMAND</th>';
+    visibleMonths.forEach(function(m){h+='<th class="r" style="font-size:7px">'+monthLabel(m)+'<br>'+(isUnits?'Units':'DRR')+'</th>'});
+    var compLabel=hasComp?monthLabel(cmpA)+' → '+monthLabel(cmpB):'MoM';
+    h+='<th class="r" style="color:'+(hasComp?'var(--purple)':'')+'">'+compLabel+'</th><th class="c">SIGNAL</th></tr></thead><tbody>';
+
+    filtRanges.forEach(function(r){
+      // Compute MoM or custom comparison
+      var trendVal=r.drr_trend;
+      if(hasComp){
+        var maA=r.monthlyArr.find(function(x){return x.month===cmpA});
+        var maB=r.monthlyArr.find(function(x){return x.month===cmpB});
+        var drrA=maA?maA.drr:0,drrB=maB?maB.drr:0;
+        trendVal=drrA>0?((drrB-drrA)/drrA*100):(drrB>0?100:0);
+      }
+      var revPct=totalFilteredNet>0?(r.net/totalFilteredNet*100):0;
+      var sig=riSig(trendVal),sigL=sig[0],sc=sig[1];var cc=CAT_COLORS[r.category]||'#666';
+      h+='<tr class="drill" onclick="rangeState.catDrill=\''+r.brand+'|||'+r.category+'\';render()">';
+      if(sb==='ALL')h+='<td><span class="pill" style="background:var(--card2);font-size:9px">'+riBrandShort(r.brand)+'</span></td>';
+      h+='<td><div style="display:flex;align-items:center;gap:6px"><div style="width:4px;height:24px;border-radius:2px;background:'+cc+'"></div><div style="font-weight:600">'+r.category+'</div></div></td>';
+      h+='<td class="r">'+r.asin_count+'</td>';
+      h+='<td class="r" style="font-weight:600">'+riFmt(r.net)+'</td>';
+      // REV% with bar
+      h+='<td class="c"><div style="display:flex;align-items:center;gap:4px;justify-content:center"><div style="width:40px;height:6px;border-radius:3px;background:var(--card2);overflow:hidden"><div style="width:'+Math.min(100,revPct)+'%;height:100%;background:var(--blue);border-radius:3px"></div></div><span style="font-size:9px;font-family:var(--mono)">'+revPct.toFixed(1)+'%</span></div></td>';
+      h+='<td class="r" style="color:var(--amber)">'+riFmt(r.ad_spend)+'</td>';
+      h+='<td class="c" style="color:'+(r.tacos>18?'var(--red)':r.tacos<12?'var(--green)':'var(--amber)')+'"><b>'+r.tacos+'%</b></td>';
+      h+='<td class="c" style="color:'+(r.acos>35?'var(--red)':'var(--muted)')+'">'+r.acos+'%</td>';
+      h+='<td class="r">'+r.organic_pct+'%</td>';
+      // SFR columns
+      var sfrKey=r.brand+'|||'+r.category;
+      var sfrInfo=isRangeMode?(sfrMap.byRange[sfrKey]):(sfrMap.byCat[sfrKey]);
+      if(sfrInfo){
+        h+='<td class="c">'+sfrBadge(sfrInfo.sfr)+'</td>';
+        var dUp=sfrInfo.demandUp||0,dDown=sfrInfo.demandDown||0;
+        var demandLabel=dUp>dDown?'▲ Up':'▼ Down';var demandC=dUp>dDown?'var(--green)':'var(--red)';
+        if(dUp===dDown){demandLabel='— Flat';demandC='var(--dim)';}
+        h+='<td class="c" style="font-size:9px;color:'+demandC+'">'+demandLabel+'</td>';
+      } else {
+        h+='<td class="c" style="color:var(--dim);font-size:9px">—</td><td class="c" style="color:var(--dim);font-size:9px">—</td>';
+      }
+      r.monthlyArr.forEach(function(ma){
+        if(visibleMonths.indexOf(ma.month)===-1)return;
+        // Highlight comparison months
+        var isCmpMonth=hasComp&&(ma.month===cmpA||ma.month===cmpB);
+        var drrVal=isUnits?(ma.drr_units||0):ma.drr;
+        h+='<td class="r" style="'+(isCmpMonth?'background:rgba(167,139,250,.08);font-weight:600':'')+'">'+(isUnits?fN(drrVal):riFmt(drrVal))+'</td>';
+      });
+      h+='<td class="r" style="color:'+(trendVal>0?'var(--green)':'var(--red)')+';font-weight:600">'+riPct(trendVal)+'</td>';
+      h+='<td class="c"><span class="pill" style="color:'+sc+';background:'+sc+'15;border:1px solid '+sc+'33">'+sigL+'</span></td></tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
+
+  // ── DRILL-DOWN → INSIGHTFUL SKU VIEW (works for both category and range mode) ──
+  if(cd){
+    var cdParts=cd.split('|||');var cdBrand=cdParts[0],cdCat=cdParts[1];
+    // Filter SKUs based on mode
+    var drillSkus;
+    if(isRangeMode){
+      drillSkus=skus.filter(function(s){return s.brand===cdBrand&&s.range===cdCat}).sort(function(a,b){return b.net-a.net});
+    } else {
+      drillSkus=skus.filter(function(s){return s.brand===cdBrand&&s.category===cdCat}).sort(function(a,b){return b.net-a.net});
+    }
+    var drillRange=filtRanges.find(function(r){return r.brand===cdBrand&&r.category===cdCat});
+    var catTotalNet=drillSkus.reduce(function(s,x){return s+x.net},0);
+    var catTotalSpend=drillSkus.reduce(function(s,x){return s+x.ad_spend},0);
+    var drillLabel=isRangeMode?'Ranges':'Categories';
+
+    h+='<div style="padding:8px 22px"><span class="back-btn" onclick="rangeState.catDrill=null;render()">← Back to '+drillLabel+'</span></div>';
+
+    // ── KPI strip ──
+    if(drillRange){
+      h+='<div class="sts" style="grid-template-columns:repeat(7,1fr)">';
+      h+='<div class="st" style="border-left:3px solid '+(CAT_COLORS[cdCat]||'var(--blue)')+'"><div class="lb">'+(isRangeMode?'RANGE':'CATEGORY')+'</div><div class="vl" style="font-size:13px">'+cdCat+'</div><div class="ch" style="color:var(--muted)">'+riBrandShort(cdBrand)+' • '+drillSkus.length+' SKUs</div></div>';
+      h+='<div class="st" style="border-left:3px solid var(--green)"><div class="lb" style="color:var(--green)">NET REV</div><div class="vl" style="color:var(--green)">'+riFmt(drillRange.net)+'</div></div>';
+      h+='<div class="st" style="border-left:3px solid var(--blue)"><div class="lb">LATEST DRR</div><div class="vl" style="color:var(--blue)">'+riFmt(drillRange.latest_drr)+'</div></div>';
+      var catMom=drillRange.prev_drr>0?((drillRange.latest_drr-drillRange.prev_drr)/drillRange.prev_drr*100):0;
+      var catMomC=catMom>=0?'var(--green)':'var(--red)';
+      h+='<div class="st" style="border-left:3px solid '+catMomC+'"><div class="lb" style="color:'+catMomC+'">MoM DRR</div><div class="vl" style="color:'+catMomC+'">'+riPct(catMom)+'</div></div>';
+      h+='<div class="st" style="border-left:3px solid '+(drillRange.tacos>18?'var(--red)':'var(--green)')+'"><div class="lb">TACOS</div><div class="vl" style="color:'+(drillRange.tacos>18?'var(--red)':'var(--green)')+'">'+drillRange.tacos+'%</div></div>';
+      h+='<div class="st"><div class="lb">ACOS</div><div class="vl" style="color:'+(drillRange.acos>35?'var(--red)':'var(--muted)')+'">'+drillRange.acos+'%</div></div>';
+      h+='<div class="st"><div class="lb">ORGANIC</div><div class="vl">'+drillRange.organic_pct+'%</div></div>';
+      h+='</div>';
+    }
+
+    // ── INSIGHT CARDS — Top Movers + Alerts ──
+    var topGainers=drillSkus.filter(function(s){return s.mom_drr>5}).sort(function(a,b){return b.mom_drr-a.mom_drr}).slice(0,3);
+    var topDecliners=drillSkus.filter(function(s){return s.mom_drr<-5}).sort(function(a,b){return a.mom_drr-b.mom_drr}).slice(0,3);
+    var highTacos=drillSkus.filter(function(s){return s.tacos>25&&s.ad_spend>500}).sort(function(a,b){return b.tacos-a.tacos}).slice(0,3);
+    var scaleOpp=drillSkus.filter(function(s){return s.tacos<15&&s.tacos>0&&s.latest_drr>0}).sort(function(a,b){return a.tacos-b.tacos}).slice(0,3);
+
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;padding:0 22px 10px">';
+    // Gainers
+    h+='<div class="ins-card" style="border-left:3px solid var(--green)"><h3 style="color:var(--green)">📈 Rising SKUs</h3>';
+    if(topGainers.length){topGainers.forEach(function(s){h+='<div class="ins-row"><span style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.sku||s.asin.slice(-6))+'</span><span style="color:var(--green);font-family:var(--mono);font-size:10px">▲'+s.mom_drr.toFixed(0)+'%</span></div>';});}
+    else{h+='<div style="color:var(--dim);font-size:10px;padding:6px 0">None this period</div>';}
+    h+='</div>';
+    // Decliners
+    h+='<div class="ins-card" style="border-left:3px solid var(--red)"><h3 style="color:var(--red)">📉 Declining SKUs</h3>';
+    if(topDecliners.length){topDecliners.forEach(function(s){h+='<div class="ins-row"><span style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.sku||s.asin.slice(-6))+'</span><span style="color:var(--red);font-family:var(--mono);font-size:10px">▼'+Math.abs(s.mom_drr).toFixed(0)+'%</span></div>';});}
+    else{h+='<div style="color:var(--dim);font-size:10px;padding:6px 0">None this period</div>';}
+    h+='</div>';
+    // High TACOS alert
+    h+='<div class="ins-card" style="border-left:3px solid var(--amber)"><h3 style="color:var(--amber)">⚠️ High TACOS</h3>';
+    if(highTacos.length){highTacos.forEach(function(s){h+='<div class="ins-row"><span style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.sku||s.asin.slice(-6))+'</span><span style="color:var(--red);font-family:var(--mono);font-size:10px">'+s.tacos+'%</span></div>';});}
+    else{h+='<div style="color:var(--dim);font-size:10px;padding:6px 0">All healthy</div>';}
+    h+='</div>';
+    // Scale opportunities
+    h+='<div class="ins-card" style="border-left:3px solid var(--cyan)"><h3 style="color:var(--cyan)">🚀 Scale Candidates</h3>';
+    if(scaleOpp.length){scaleOpp.forEach(function(s){h+='<div class="ins-row"><span style="font-size:10px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(s.sku||s.asin.slice(-6))+'</span><span style="color:var(--green);font-family:var(--mono);font-size:10px">'+s.tacos+'% TACOS</span></div>';});}
+    else{h+='<div style="color:var(--dim);font-size:10px;padding:6px 0">—</div>';}
+    h+='</div>';
+    h+='</div>';
+
+    // ── SKU DRR chart ──
+    if(drillSkus.length>1){
+      h+='<div class="chart-row" style="grid-template-columns:2fr 1fr">';
+      h+='<div class="chart-wrap"><div class="chart-label">SKU DRR Trend — '+cdCat+'</div><div style="height:200px"><canvas id="ri-cat-sku-chart"></canvas></div></div>';
+      h+='<div class="chart-wrap"><div class="chart-label">Revenue Contribution</div><div style="height:200px"><canvas id="ri-sku-contrib"></canvas></div></div>';
+      h+='</div>';
+    }
+
+    // ── SKU TABLE with contribution bars + MoM column + search ──
+    var skuQ=(rs.skuSearch||'').toLowerCase();
+    var filteredDrillSkus=skuQ?drillSkus.filter(function(s){
+      return(s.name||'').toLowerCase().includes(skuQ)||(s.sku||'').toLowerCase().includes(skuQ)||(s.asin||'').toLowerCase().includes(skuQ);
+    }):drillSkus;
+
+    h+='<div class="sec"><div class="sec-title" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;color:'+(CAT_COLORS[cdCat]||'var(--text)')+'">SKU Performance — '+cdCat;
+    h+=' <span style="font-size:9px;color:var(--dim);font-weight:400">'+filteredDrillSkus.length+(skuQ?' of '+drillSkus.length:'')+' SKUs</span>';
+    h+='<input class="sbox" style="margin-left:auto;min-width:180px" placeholder="🔍 Search SKU / ASIN..." value="'+((rs.skuSearch||'').replace(/"/g,'&quot;'))+'" oninput="rangeState.skuSearch=this.value;render()">';
+    h+='</div>';
+
+    var skuCompLabel=hasComp?monthLabel(cmpA)+'→'+monthLabel(cmpB):'MoM';
+    h+='<div class="tbl-wrap" style="max-height:600px"><table class="tbl"><thead><tr><th></th><th>PRODUCT</th><th>SKU</th><th class="r">NET REV</th><th class="c">SHARE</th><th class="r">AD SPEND</th><th class="c">TACOS</th><th class="c">ACOS</th><th class="r">ORG%</th><th class="c" style="color:var(--cyan)">SFR</th><th class="r">LATEST DRR</th><th class="c" style="color:'+(hasComp?'var(--purple)':'')+'">'+skuCompLabel+'</th>';
+    visibleMonths.slice(-6).forEach(function(m){h+='<th class="r" style="font-size:7px">'+monthLabel(m)+'</th>'});
+    h+='<th class="c">ACTION</th></tr></thead><tbody>';
+    filteredDrillSkus.forEach(function(s){
+      // Compute comparison
+      var skuMomVal=s.mom_drr;
+      if(hasComp){
+        var smaA=s.monthly.find(function(x){return x.month===cmpA});
+        var smaB=s.monthly.find(function(x){return x.month===cmpB});
+        var sdA=smaA?smaA.drr:0,sdB=smaB?smaB.drr:0;
+        skuMomVal=sdA>0?((sdB-sdA)/sdA*100):(sdB>0?100:0);
+      }
+      var sig=riSkuSig(Object.assign({},s,{mom_drr:skuMomVal})),sigL=sig[0],sc=sig[1];
+      var share=catTotalNet>0?(s.net/catTotalNet*100):0;
+      var momC=skuMomVal>=0?'var(--green)':'var(--red)';
+      h+='<tr onclick="rangeState.selSku=\''+s.asin+'\';render()" class="drill">';
+      h+='<td><img src="'+getAsinImg(s.asin)+'" onerror="this.style.display=\'none\'" style="width:28px;height:28px;border-radius:4px;background:var(--card2)" loading="lazy"></td>';
+      h+='<td><div style="font-size:10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+s.name+'</div><div style="font-size:8px;font-family:var(--mono);color:var(--muted)">'+s.asin+'</div></td>';
+      h+='<td style="font-family:var(--mono);font-size:10px;color:var(--cyan);white-space:nowrap">'+(s.sku||'\u2014')+'</td>';
+      h+='<td class="r" style="font-weight:600;color:var(--green)">'+riFmt(s.net)+'</td>';
+      // Share bar
+      h+='<td class="c"><div style="display:flex;align-items:center;gap:4px;justify-content:center"><div style="width:40px;height:6px;border-radius:3px;background:var(--card2);overflow:hidden"><div style="width:'+Math.min(100,share)+'%;height:100%;background:var(--blue);border-radius:3px"></div></div><span style="font-size:9px;font-family:var(--mono)">'+share.toFixed(1)+'%</span></div></td>';
+      h+='<td class="r" style="color:var(--amber)">'+riFmt(s.ad_spend)+'</td>';
+      h+='<td class="c" style="color:'+(s.tacos>20?'var(--red)':s.tacos<12?'var(--green)':'var(--amber)')+'"><b>'+s.tacos+'%</b></td>';
+      h+='<td class="c" style="color:'+(s.acos>40?'var(--red)':'var(--muted)')+'">'+s.acos+'%</td>';
+      h+='<td class="r" style="color:'+(s.org_pct>60?'var(--green)':'var(--muted)')+'">'+s.org_pct+'%</td>';
+      // SFR for this ASIN
+      var skuSfr=sfrMap.byAsin[s.asin];
+      h+='<td class="c">'+(skuSfr?sfrBadge(skuSfr.sfr):'<span style="color:var(--dim);font-size:9px">—</span>')+'</td>';
+      h+='<td class="r" style="font-weight:600">'+riFmt(s.latest_drr)+'</td>';
+      h+='<td class="c" style="color:'+momC+';font-weight:600">'+riPct(skuMomVal)+'</td>';
+      // Last 6 months DRR
+      s.monthly.slice(-6).forEach(function(m){
+        if(visibleMonths.indexOf(m.month)===-1)return;
+        var isCmp=hasComp&&(m.month===cmpA||m.month===cmpB);
+        var drrV=isUnits?(m.drr_units||0):m.drr;
+        h+='<td class="r" style="font-size:9px;'+(isCmp?'background:rgba(167,139,250,.08);font-weight:600':'')+'">'+(isUnits?fN(drrV):riFmt(drrV))+'</td>';
+      });
+      // Action signal
+      h+='<td class="c"><span class="pill" style="color:'+sc+';background:'+sc+'15;border:1px solid '+sc+'33;font-size:8px">'+sigL+'</span></td>';
+      h+='</tr>';
+    });
+    h+='</tbody></table></div></div>';
+  }
+
+  document.getElementById('app').innerHTML=h;
+
+  // ── CHARTS — mounted after DOM update ──
+  setTimeout(function(){
+    var yFmt=function(v){return v>=100000?'\u20b9'+(v/100000).toFixed(1)+'L':v>=1000?'\u20b9'+(v/1000)+'K':'\u20b9'+v};
+    var chartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:9},padding:6}}},
+      scales:{x:{ticks:{color:'#6b7280',font:{size:8},maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#3a3a44',font:{size:9},callback:yFmt},grid:{color:'#1c1c25'}}}};
+
+    // Monthly DRR bar chart
+    if(document.getElementById('ri-drr-bar')){
+      var barLabels=visibleMonths.map(function(m){return monthLabel(m)});
+      var barData=visibleMonths.map(function(m){
+        var total=0;
+        filtRanges.forEach(function(r){
+          var ma=r.monthlyArr.find(function(x){return x.month===m});
+          if(ma)total+=isUnits?(ma.drr_units||0):ma.drr;
+        });
+        return total;
+      });
+      var barColors=barData.map(function(v,i){return i===barData.length-1?'rgba(59,130,246,.9)':'rgba(59,130,246,.5)'});
+      var barYFmt=isUnits?function(v){return v>=1000?(v/1000).toFixed(0)+'K':v}:yFmt;
+      var barChartOpts={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#6b7280',font:{size:9},padding:6}}},
+        scales:{x:{ticks:{color:'#6b7280',font:{size:8},maxRotation:45},grid:{display:false}},y:{beginAtZero:true,ticks:{color:'#3a3a44',font:{size:9},callback:barYFmt},grid:{color:'#1c1c25'}}}};
+      charts['ri-drr-bar']=new Chart(document.getElementById('ri-drr-bar'),{type:'bar',data:{labels:barLabels,datasets:[
+        {label:isUnits?'DRR Units/day':'DRR ₹/day',data:barData,backgroundColor:barColors,borderColor:'#3b82f6',borderWidth:1,borderRadius:4}
+      ]},options:barChartOpts});
+    }
+
+    // Category pie chart with % labels
+    if(document.getElementById('ri-cat-pie')){
+      var pieMode=rangeState.pieMode||'cat';
+      var pieItems,pieTotalNet,pieLabels,pieData;
+
+      if(pieMode==='range'){
+        // Group by range from SKUs
+        var rangeAgg={};
+        filtSkus.forEach(function(s){
+          var rng=s.range||'Unknown';
+          if(!rangeAgg[rng])rangeAgg[rng]={net:0,label:rng};
+          rangeAgg[rng].net+=s.net;
+        });
+        pieItems=Object.values(rangeAgg).sort(function(a,b){return b.net-a.net}).slice(0,10);
+        pieTotalNet=pieItems.reduce(function(s,x){return s+x.net},0);
+        pieLabels=pieItems.map(function(x){var pct=pieTotalNet>0?(x.net/pieTotalNet*100):0;return x.label+' '+pct.toFixed(1)+'%';});
+        pieData=pieItems.map(function(x){return x.net});
+      } else {
+        var topCats=filtRanges.slice(0,10);
+        pieTotalNet=topCats.reduce(function(s,r){return s+r.net},0);
+        pieLabels=topCats.map(function(r){
+          var pct=pieTotalNet>0?(r.net/pieTotalNet*100):0;
+          return(sb==='ALL'?riBrandShort(r.brand)+' ':'')+r.category+' '+pct.toFixed(1)+'%';
+        });
+        pieData=topCats.map(function(r){return r.net});
+      }
+
+      var pieColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#22d3ee','#6366f1','#f97316','#a78bfa','#84cc16'];
+      // Custom plugin to draw % on slices
+      var pctPlugin={id:'pctLabels',afterDraw:function(chart){
+        var ctx=chart.ctx;var meta=chart.getDatasetMeta(0);var total=chart.data.datasets[0].data.reduce(function(a,b){return a+b},0);
+        if(!total)return;
+        meta.data.forEach(function(el,i){
+          var val=chart.data.datasets[0].data[i];var pct=(val/total*100);
+          if(pct<3)return; // skip tiny slices
+          var pos=el.tooltipPosition();
+          ctx.save();ctx.fillStyle='#fff';ctx.font='bold 10px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+          ctx.fillText(pct.toFixed(0)+'%',pos.x,pos.y);ctx.restore();
+        });
+      }};
+      charts['ri-cat-pie']=new Chart(document.getElementById('ri-cat-pie'),{type:'doughnut',data:{labels:pieLabels,datasets:[
+        {data:pieData,backgroundColor:pieColors.slice(0,pieLabels.length),borderWidth:0}
+      ]},plugins:[pctPlugin],options:{responsive:true,maintainAspectRatio:false,cutout:'45%',plugins:{
+        legend:{position:'right',labels:{color:'#6b7280',font:{size:9},padding:5,usePointStyle:true,pointStyleWidth:8}},
+        tooltip:{callbacks:{label:function(ctx){var total=ctx.dataset.data.reduce(function(a,b){return a+b},0);var pct=total>0?(ctx.raw/total*100).toFixed(1)+'%':'';return ctx.label+': '+riFmt(ctx.raw)+' ('+pct+')';}}}
+      }}});
+    }
+
+    // Category drill-down SKU chart
+    if(cd&&document.getElementById('ri-cat-sku-chart')){
+      var cdParts2=cd.split('|||');var cdBrand2=cdParts2[0],cdCat2=cdParts2[1];
+      var cSkus=skus.filter(function(s){return s.brand===cdBrand2&&s.category===cdCat2}).sort(function(a,b){return b.net-a.net}).slice(0,10);
+      var skuColors=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#22d3ee','#6366f1','#f97316','#a78bfa','#84cc16'];
+      var skuDS=cSkus.map(function(s,si){
+        return{label:(s.sku||s.asin).slice(0,15),data:visibleMonths.map(function(m){
+          var mo=s.monthly.find(function(x){return x.month===m});return mo?mo.drr:0;
+        }),borderColor:skuColors[si%skuColors.length],backgroundColor:'transparent',pointRadius:2,tension:.3,borderWidth:1.5};
+      });
+      charts['ri-cat-sku']=new Chart(document.getElementById('ri-cat-sku-chart'),{type:'line',data:{
+        labels:visibleMonths.map(function(m){return monthLabel(m)}),datasets:skuDS
+      },options:chartOpts});
+    }
+    // Contribution pie
+    if(cd&&document.getElementById('ri-sku-contrib')){
+      var cdParts3=cd.split('|||');var cdBrand3=cdParts3[0],cdCat3=cdParts3[1];
+      var cSkus2=skus.filter(function(s){return s.brand===cdBrand3&&s.category===cdCat3}).sort(function(a,b){return b.net-a.net});
+      var top5=cSkus2.slice(0,5);var others=cSkus2.slice(5);
+      var pieL2=top5.map(function(s){return(s.sku||s.asin).slice(0,12)});
+      var pieD2=top5.map(function(s){return s.net});
+      if(others.length){pieL2.push('Others ('+others.length+')');pieD2.push(others.reduce(function(s,x){return s+x.net},0));}
+      var pieC2=['#3b82f6','#8b5cf6','#10b981','#f59e0b','#ec4899','#64748b'];
+      charts['ri-sku-contrib']=new Chart(document.getElementById('ri-sku-contrib'),{type:'doughnut',data:{labels:pieL2,datasets:[{data:pieD2,backgroundColor:pieC2.slice(0,pieL2.length),borderWidth:0}]},
+        options:{responsive:true,maintainAspectRatio:false,cutout:'50%',plugins:{legend:{position:'right',labels:{color:'#6b7280',font:{size:8},padding:4,usePointStyle:true,pointStyleWidth:6}}}}});
+    }
+  },80);
+}
+
+
+// ── AI Analysis for Analysis tab ──
+var _aiHistory=[];
+var _aiContext='';
+
+async function runQuickAsk(question){
+  var panel=document.getElementById('ai-analysis-panel');
+  if(!panel)return;
+  if(panel.style.display==='none'||!panel.style.display){
+    // Run full analysis first, then ask
+    await runAnalysisAI();
+    // After analysis loads, ask the question
+    setTimeout(function(){
+      var qi=document.getElementById('ai-q-input');
+      if(qi){qi.value=question;askAnalysisAI();}
+    },500);
+  } else {
+    // Panel already open, just ask
+    var qi=document.getElementById('ai-q-input');
+    if(qi){qi.value=question;askAnalysisAI();}
+  }
+}
+
+function buildAnalysisContext(){
+  var data=buildRangeData();
+  var rs=rangeState;
+  var sb=rs.selBrand,sr=rs.selRange,srR=rs.selRangeR,pieMode=rs.pieMode||'cat';
+  var isRangeMode=pieMode==='range';
+  var df=rs.dayFrom||1,dt2=rs.dayTo||31;
+  var hasDayF=df>1||dt2<31;
+  var cmpA=rs.compMonthA||'',cmpB=rs.compMonthB||'';
+  var sfrMap=getSfrMap();
+
+  var baseRanges=isRangeMode?(data.rangeRanges||[]):data.ranges;
+  var filtR=sb==='ALL'?baseRanges:baseRanges.filter(function(r){return r.brand===sb});
+  if(sr&&sr!=='ALL')filtR=filtR.filter(function(r){return r.category===sr});
+  var filtS=sb==='ALL'?data.skus:data.skus.filter(function(s){return s.brand===sb});
+  if(sr&&sr!=='ALL'){filtS=isRangeMode?filtS.filter(function(s){return s.range===sr}):filtS.filter(function(s){return s.category===sr});}
+
+  var filterDesc=(sb==='ALL'?'All Brands':sb)+' | '+(isRangeMode?'Range view':'Category view');
+  if(sr&&sr!=='ALL')filterDesc+=' | '+(isRangeMode?'Range':'Category')+': '+sr;
+  if(hasDayF)filterDesc+=' | Day '+df+'-'+dt2+' (apples-to-apples)';
+  if(cmpA&&cmpB)filterDesc+=' | Comparing '+cmpA+' vs '+cmpB;
+
+  var months=data.sortedMonths;
+  var lastMonth=months[months.length-1]||'';
+
+  var catLines=filtR.slice(0,20).map(function(r){
+    var sfrKey=r.brand+'|||'+r.category;
+    var sfr=isRangeMode?(sfrMap.byRange[sfrKey]):(sfrMap.byCat[sfrKey]);
+    var sfrStr=sfr&&sfr.sfr?'SFR#'+sfr.sfr:'';
+    var drrSeries=r.monthlyArr.map(function(ma){return monthLabel(ma.month)+':'+riFmt(ma.drr)}).join(' > ');
+    return(sb==='ALL'?riBrandShort(r.brand)+' ':'')+r.category+
+      ' | Net:'+riFmt(r.net)+' | Spend:'+riFmt(r.ad_spend)+' | TACOS:'+r.tacos+'% | ACOS:'+r.acos+
+      '% | Org:'+r.organic_pct+'% | MoM:'+riPct(r.drr_trend)+' | '+sfrStr+
+      '\n  DRR: '+drrSeries;
+  }).join('\n\n');
+
+  var topSkus=filtS.sort(function(a,b){return b.net-a.net}).slice(0,25).map(function(s){
+    var sfrA=sfrMap.byAsin[s.asin];
+    var sfrStr=sfrA&&sfrA.sfr?'SFR#'+sfrA.sfr:'';
+    var last3=s.monthly.slice(-3).map(function(m){return monthLabel(m.month)+':'+riFmt(m.drr)}).join('>');
+    var signal='';
+    if(s.mom_drr<-15&&s.tacos>20)signal='DECLINING+HIGH_TACOS';
+    else if(s.mom_drr<-15)signal='DECLINING';
+    else if(s.tacos>25)signal='HIGH_TACOS';
+    else if(s.mom_drr>10&&s.tacos<15)signal='SCALE';
+    else if(s.org_pct>85&&s.tacos<5)signal='ORGANIC_STAR';
+    return(s.sku||s.asin)+' ['+s.category+(s.range?'/'+s.range:'')+'] '+(signal?'['+signal+']':'')+
+      '\n  Net:'+riFmt(s.net)+' Spend:'+riFmt(s.ad_spend)+' TACOS:'+s.tacos+'% ACOS:'+s.acos+
+      '% Org:'+s.org_pct+'% MoM:'+riPct(s.mom_drr)+' '+sfrStr+' DRR(3m):'+last3;
+  }).join('\n');
+
+  var gainers=filtS.filter(function(s){return s.mom_drr>10&&s.net>50000}).sort(function(a,b){return b.mom_drr-a.mom_drr}).slice(0,5);
+  var losers=filtS.filter(function(s){return s.mom_drr<-10&&s.net>50000}).sort(function(a,b){return a.mom_drr-b.mom_drr}).slice(0,5);
+  var gainerStr=gainers.map(function(s){return(s.sku||s.asin)+': MoM '+riPct(s.mom_drr)+' DRR '+riFmt(s.latest_drr)+' TACOS '+s.tacos+'%'}).join('\n')||'None';
+  var loserStr=losers.map(function(s){return(s.sku||s.asin)+': MoM '+riPct(s.mom_drr)+' DRR '+riFmt(s.latest_drr)+' TACOS '+s.tacos+'%'}).join('\n')||'None';
+
+  var highTacos=filtS.filter(function(s){return s.tacos>20&&s.ad_spend>10000}).sort(function(a,b){return b.tacos-a.tacos}).slice(0,8);
+  var tacosStr=highTacos.map(function(s){return(s.sku||s.asin)+': TACOS '+s.tacos+'% Spend '+riFmt(s.ad_spend)+' Net '+riFmt(s.net)}).join('\n')||'All healthy';
+
+  var scaleOpp=filtS.filter(function(s){return s.tacos>0&&s.tacos<12&&s.mom_drr>=0&&s.ad_spend>5000}).sort(function(a,b){return a.tacos-b.tacos}).slice(0,8);
+  var scaleStr=scaleOpp.map(function(s){return(s.sku||s.asin)+': TACOS '+s.tacos+'% Spend '+riFmt(s.ad_spend)+' DRR '+riFmt(s.latest_drr)+' MoM '+riPct(s.mom_drr)}).join('\n')||'None';
+
+  var totalNet=filtR.reduce(function(s,r){return s+r.net},0);
+  var totalSpend=filtR.reduce(function(s,r){return s+r.ad_spend},0);
+  var avgTacos=totalNet>0?(totalSpend/totalNet*100):0;
+
+  _aiContext='You are a senior Amazon e-commerce growth strategist for Onesto Labs. Brands: Bare Anatomy (BA, haircare), Chemist at Play (CAP, skincare/bodycare), Sunscoop (SS, sunscreen). All sold on Amazon India.\n\nFILTER: '+filterDesc+'\nPERIOD: '+months[0]+' to '+lastMonth+' ('+months.length+' months)\nTOTALS: Net '+riFmt(totalNet)+' | Spend '+riFmt(totalSpend)+' | TACOS '+avgTacos.toFixed(1)+'%\n\n'+(isRangeMode?'RANGE':'CATEGORY')+' PERFORMANCE:\n'+catLines+'\n\nTOP 25 SKUs:\n'+topSkus+'\n\nGAINERS:\n'+gainerStr+'\n\nLOSERS:\n'+loserStr+'\n\nHIGH TACOS (>20%):\n'+tacosStr+'\n\nSCALE OPP (TACOS<12%):\n'+scaleStr+'\n\nANALYSIS FRAMEWORK:\n**EXECUTIVE SUMMARY** (2-3 lines)\n**TOP 3 INSIGHTS** (data-backed, with rupee impact)\n**RED FLAGS** (immediate attention needed)\n**GROWTH PLAYBOOK** (prioritized actions with expected outcome)\n**SPEND REALLOCATION** (where to cut/increase with specific amounts)\nBe EXTREMELY specific with SKU names, amounts, percentages. Every recommendation must reference data above.';
+  return _aiContext;
+}
+
+async function runAnalysisAI(){
+  var panel=document.getElementById('ai-analysis-panel');
+  if(!panel)return;
+  panel.style.display='block';
+  _aiHistory=[];
+  var ctx=buildAnalysisContext();
+  panel.innerHTML='<div style="display:flex;align-items:center;gap:8px;color:var(--cyan);padding:10px 0"><div class="spin" style="width:16px;height:16px;border-width:2px"></div><span style="font-size:12px">Analyzing with Claude AI...</span></div>';
+  try{
+    var resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:3000,system:ctx,
+        messages:[{role:'user',content:'Analyze deeply. Key insights + what to do this week. Be specific with SKU names and amounts.'}]})});
+    var result=await resp.json();
+    var text=result.content?.map(function(c){return c.text||''}).join('')||'Could not generate analysis.';
+    _aiHistory=[{role:'user',content:'Analyze'},{role:'assistant',content:text}];
+    showAIPanel(text);
+  }catch(e){
+    panel.innerHTML='<div style="color:var(--red);font-size:12px;padding:10px">Could not connect. Run: <code>python jarvis_server.py</code></div>';
+  }
+}
+
+async function askAnalysisAI(){
+  var input=document.getElementById('ai-q-input');if(!input)return;
+  var q=input.value.trim();if(!q)return;input.value='';
+  if(!_aiContext)buildAnalysisContext();
+  _aiHistory.push({role:'user',content:q});
+  var msgsDiv=document.getElementById('ai-msgs');
+  msgsDiv.innerHTML+='<div style="align-self:flex-end;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);padding:8px 12px;border-radius:10px;font-size:11px;color:#00e5ff;max-width:85%;margin-top:8px">'+q.replace(/</g,'&lt;')+'</div>';
+  msgsDiv.innerHTML+='<div id="ai-thinking" style="color:var(--muted);font-size:11px;padding:8px 0;display:flex;align-items:center;gap:6px"><div class="spin" style="width:12px;height:12px;border-width:2px"></div>Thinking...</div>';
+  msgsDiv.scrollTop=msgsDiv.scrollHeight;
+  try{
+    var resp=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:2000,system:_aiContext,messages:_aiHistory})});
+    var result=await resp.json();
+    var text=result.content?.map(function(c){return c.text||''}).join('')||'No response.';
+    _aiHistory.push({role:'assistant',content:text});
+    var el=document.getElementById('ai-thinking');if(el)el.remove();
+    var fmt=text.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--cyan)">$1</strong>').replace(/\n/g,'<br>');
+    msgsDiv.innerHTML+='<div style="background:var(--card2);border:1px solid var(--border);padding:10px 14px;border-radius:10px;font-size:11px;color:var(--text);line-height:1.7;max-width:95%;margin-top:8px">'+fmt+'</div>';
+    msgsDiv.scrollTop=msgsDiv.scrollHeight;
+  }catch(e){var el=document.getElementById('ai-thinking');if(el)el.innerHTML='<span style="color:var(--red)">Error</span>';}
+}
+
+function showAIPanel(text){
+  var panel=document.getElementById('ai-analysis-panel');
+  var fmt=text.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--cyan)">$1</strong>').replace(/\n/g,'<br>');
+  panel.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border)"><div style="font-size:14px;font-weight:700;color:var(--cyan)">🤖 AI Analysis</div><button onclick="document.getElementById(\'ai-analysis-panel\').style.display=\'none\'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px">✕</button></div><div id="ai-msgs" style="max-height:350px;overflow-y:auto;display:flex;flex-direction:column;gap:4px"><div style="background:var(--card2);border:1px solid var(--border);padding:10px 14px;border-radius:10px;font-size:11px;color:var(--text);line-height:1.7">'+fmt+'</div></div><div style="display:flex;gap:6px;margin-top:10px;padding-top:8px;border-top:1px solid var(--border)"><input id="ai-q-input" style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:11px;font-family:var(--font)" placeholder="Ask a follow-up..." onkeydown="if(event.key===\'Enter\')askAnalysisAI()"><button onclick="askAnalysisAI()" style="background:linear-gradient(135deg,#00e5ff,#7c3aed);border:none;color:#fff;padding:8px 16px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer">Ask</button></div><div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap"><button class="fbtn" onclick="document.getElementById(\'ai-q-input\').value=\'Why is DRR declining for top losers?\';askAnalysisAI()" style="font-size:9px;padding:3px 8px">Why declining?</button><button class="fbtn" onclick="document.getElementById(\'ai-q-input\').value=\'Where can I cut 1L spend safely?\';askAnalysisAI()" style="font-size:9px;padding:3px 8px">Cut 1L spend</button><button class="fbtn" onclick="document.getElementById(\'ai-q-input\').value=\'Which 3 SKUs to scale and by how much?\';askAnalysisAI()" style="font-size:9px;padding:3px 8px">Scale which?</button><button class="fbtn" onclick="document.getElementById(\'ai-q-input\').value=\'Organic vs paid dependency by category\';askAnalysisAI()" style="font-size:9px;padding:3px 8px">Org vs Paid</button></div>';
+}
+
 async function loadAll(){let ok=0;
 try{const r=await fetch('./ads_data.json?t='+Date.now());if(r.ok){S.ads=await r.json();ok++}}catch{}
 try{const r=await fetch('./rank_history.json?t='+Date.now());if(r.ok){S.rank=await r.json();ok++}}catch{}
 try{const r=await fetch('./sales_data.json?t='+Date.now());if(r.ok){S.sales=await r.json();}}catch{}
+try{const r=await fetch('./sfr_data.json?t='+Date.now());if(r.ok){S.sfr=await r.json();}}catch{}
 const ab=getAllBD();ab.forEach(bd=>{if(bd.daily_totals){Object.keys(bd.daily_totals).forEach(d=>{if(!S.allDates.includes(d))S.allDates.push(d)});}});S.allDates.sort();if(S.allDates.length){S.dateStart=S.allDates[0];S.dateEnd=S.allDates[S.allDates.length-1];}
 if(ok>0)render();else document.getElementById('app').innerHTML='<div class="empty">No data found.</div>';}
-// Hash routing for Business page
+// Hash routing for Business and Range pages
 if(location.hash==='#business')S.page='business';
-window.addEventListener('hashchange',()=>{if(location.hash==='#business'){S.page='business';render();}else if(location.hash===''||location.hash==='#'){S.page='ads';render();}});
+if(location.hash==='#range')S.page='range';
+window.addEventListener('hashchange',()=>{if(location.hash==='#business'){S.page='business';render();}else if(location.hash==='#range'){S.page='range';render();}else if(location.hash===''||location.hash==='#'){S.page='ads';render();}});
 loadAll();
 </script>
 <div id="jarvis-panel" class="jarvis-panel">
@@ -2079,6 +3273,28 @@ INSTRUCTIONS:
 // Pending drill chart renders — executed after innerHTML settles
 window._drillChartJob=null;
 
+function downloadTermsCSV(){
+  const terms=window._lastFilteredTerms||[];
+  if(!terms.length){alert('No terms to download');return;}
+  const headers=['Keyword','Type','Org Rank','Spend','Sales','ACOS%','Clicks','CPC','Units','CVR%','Impr','CTR%','Campaigns','Match Types'];
+  const rows=terms.map(t=>{
+    const ac=t.sales>0?(t.spend/t.sales*100):(t.spend>0?999:0);
+    return[
+      `"${(t.keyword||'').replace(/"/g,'""')}"`,t.type||'',t.orgRank||'',
+      Math.round(t.spend),Math.round(t.sales),ac>0&&ac<999?ac.toFixed(1):'',
+      t.clicks||0,(t.clicks>0?(t.spend/t.clicks).toFixed(1):''),t.units||0,
+      t.cvr>0?t.cvr.toFixed(1):'',t.impr||0,t.ctr>0?t.ctr.toFixed(1):'',
+      `"${(t.campaignList||[]).join('; ')}"`,`"${(t.matchList||[]).join(', ')}"`
+    ].join(',');
+  });
+  const csv=headers.join(',')+'\n'+rows.join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`search_terms_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
+}
+
 function toggleBizDrill(asin){
   S.bizDrill=(S.bizDrill===asin)?null:asin;
   render();
@@ -2087,7 +3303,7 @@ function renderDrill(asin){
   render();
 }
 
-function _mountDrillCharts(cId,labels,units,net,spend,tacos,cvr,acos,adSalesTotal,organicTotal){
+function _mountDrillCharts(cId,labels,units,net,spend,tacos,cvr,acos){
   function safeChart(id,cfg){
     try{
       const c=document.getElementById(id);
@@ -2124,17 +3340,6 @@ function _mountDrillCharts(cId,labels,units,net,spend,tacos,cvr,acos,adSalesTota
   ]},options:{...base,scales:{x:xScale,
     y:mkY('left','#22d3ee',v=>Number(v).toFixed(0)+'%'),
     y1:mkY('right','#ef4444',v=>Number(v).toFixed(0)+'%')}}});
-
-  // Chart 4: Revenue Split Doughnut
-  const pieTotal=(adSalesTotal||0)+(organicTotal||0);
-  if(pieTotal>0){
-    const adPct=((adSalesTotal/pieTotal)*100).toFixed(0);
-    const orgPct=((organicTotal/pieTotal)*100).toFixed(0);
-    safeChart('dc_pie_'+cId,{type:'doughnut',data:{
-      labels:[`Ad Sales ${adPct}%`,`Organic ${orgPct}%`],
-      datasets:[{data:[adSalesTotal,organicTotal],backgroundColor:['rgba(59,130,246,.6)','rgba(16,185,129,.6)'],borderWidth:0}]
-    },options:{responsive:true,maintainAspectRatio:false,animation:false,cutout:'55%',plugins:{legend:{display:true,position:'bottom',labels:{color:'#666',font:{size:9},padding:8}}}}});
-  }
 }
 
 async function sendJarvis(){
